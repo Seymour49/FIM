@@ -128,19 +128,60 @@ $\textbf{Freq}_{\mathcal{T}}$(\emph{I}) = $\frac{ | \textbf{ cover$_{\mathcal{T}
 avec \emph{minfreq} simplement définie par $\frac{\emph{minsup}}{| \mathcal{T} |}$. \\
 
 \subsection{Exemple}
-	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article) : \\
+	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article). Le talbeau 1 décrit chaque transaction par : un identifiant, une liste d'objets achetés et la liste des items fréquents vis à vis d'un support minimal de  3.\\
+
+\begin{tabular}{|c|l|l|}
+	\hline
+	ID transaction & Objets achetés & Items Fréquents Ordonnés \\
+	\hline
+	100 & f, c, a, d, g, i m, p & f, c, a, m, p \\
+	\hline
+	200 & a, b, c, f, l, m, o & f, c, a, b, m \\
+	\hline
+	300 & b, f, h, j, o & f, b \\
+	\hline
+	400 & b, c, k, s, p & c, b, p \\
+	\hline
+	500 & a, f, c, e, l, p, m, n & f, c, a, m, p \\
+	\hline	
+\end{tabular}
+\vspace{0.4cm}
+\\
+\hspace{0.15cm}Une fois calculé, l'ensemble des itemsets fréquents vis à vis de ce jeu de données $\mathcal{T}$ est l'ensemble $\textbf{F}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (a:3), (b:3), (m:3), (p:3), (fc:3), (fa:3), (fm:3), (cm:3), (cp:3), (ca:3), (am:3), (fca:3), (fcm:3), (fam:3), (cam:3), (fcam:3) \}.  \\
+
+\subsection{Complexité et Propriétés}
+La complexité du problème vient d'une part du nombre d'itemsets à considérer en fonction du nombre d'objets et d'autre part de nombre de transactions dans la base. En effet, soit \emph{n} objets fréquents dans la base, il y a alors $2^{n}$ itemsets possibles. D'autre part, le calcul du support d'un itemset se fait au travers de l'ensemble des transactions. L'efficacité d'une méthode à résoudre ce problème se fera donc par sa capacité à explorer intelligement l'espace des $2^{n}$ itemsets et par son efficacité à calculer le support d'un itemset vis à vis de $| \mathcal{T} |$. \\
+\hspace{0.15cm}Différents théorèmes et propriétés issus de l'étude de ce problème sont utilisés dans les méthodes proposées pour le résoudre. Nous présentons les propriétés liées à la monotonie du support d'un ensemble et renvoyons le lecteur vers \cite{BOD06} et \cite{GOE} pour plus de détails. \\
+\textbf{Monotonie du support.} Soit une base de transactions $ \mathcal{T} sur \mathcal{I} $ et soient \emph{X, Y} $\subseteq \mathcal{I}$ deux itemsets. Alors, \\
+\begin{center}
+\emph{X} $\subseteq $ \emph{Y} $\Rightarrow$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \leq $ \textbf{sup$_{\mathcal{T}}$}(\emph{X})
+\end{center}
+
+Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un itemset comprenant k objets) est fréquent, alors l'ensemble \emph{Y} des k-1-itemsets $\subset $\emph{X} est fréquent. Par exemple, (fca:3) est fréquent, de même que (fc:3), (fa:3) et (ca:3). Nous pouvons de manière duale dire que si un k- itemset \emph{X} est non-fréquent, alors aucun des k+1-itemset \emph{Y} tel que \emph{X} $ \subset $ \emph{Y} n'est fréquent. Ces deux observations sont à la base des différents sens de parcours de l'espace de recherche des $2^{n}$ itemsets possibles dans la plupart des algorithmes.
+
+\section{Problème des itemsets clos maximaux}
+
+	Afin de réduire l'espace de recherche, il a été proposé de contraindre la recherche à l'ensemble des itemsets clos. Un k-itemset\emph{X} fréquent est clos si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \forall  $ \emph{Y} tel que \emph{X} $ \subset $ \emph{Y}.  Un itemset clos est maximal si aucun de ses surensembles n'est fréquent. Ainsi dans notre exemple, l'ensemble des itemsets clos est   $\textbf{C}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (b:3), (cp:3), (fcam:3) \} et l'ensemble des itemsets clos maximaux est  $\textbf{MC}_{\mathcal{T},3}$ =  $\textbf{C}_{\mathcal{T},3} - $ \{ (f:4), (c:4) \}. \\
+
+[Insertion figure ] \\
+
+Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivés de l'ensemble des itemsets clos maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux. \\
+
+\chapter{Etat de l'art}
+Dans ce chapitre, nous nous attacherons à présenter les principales méthodes de la littérature pour le calcul des itemsets fréquents. La première section sera dédiée à la présentation des méthodes exactes. Nous y aborderons les trois principaux algorithmes que sont A Priori \cite{AGR94}, Eclat \cite{ZAK00} et FP-Growth \cite{HAN04}. D'autres méthodes dédiées au calcul des itemsets clos maximaux seront également abordées. Enfin nous introduirons quelques méthodes présentant un intérêt pour la problématique du passage à l'échelle. La section 2 sera consacrée aux méthodes métaheuristiques de la littérature. [TO COMPLETE ] \\
+
+\section{ Méthodes exactes}
+
+\subsection{A Priori}
+
+	Un an après avoir introduit le problème des règles d'associations (et par conséquent le problème de calcul des itemsets fréquents) dans \cite{AGR93}, les auteurs ont proposé l'algorithme A Priori \cite{AGR94} restant la référence littéraire du domaine. De nombreux papiers proposent des optimisations et dérivation d'A Priori. Son principe général est la génération de k+1-itemsets candidats à partir des k-itemsets fréquents précédemment calculés. L'algorithme 1 présente la phase de calcul des itemsets fréquents par A Priori. Nous ne présenterons pas l'algorithme calculant les règles d'associations dans cette étude. \\ 
 
 
-\cite{AGR94}
 \cite{BRI97} 
 \cite{PEI00} 
 \cite{BOR03} 
 \cite{PEI01} 
-\cite{PAS99} 
-\cite{ZAK99}
-\cite{HAN04}
-\cite{BOD06}
-\cite{GOE}
+
 
   \addcontentsline{toc}{chapter}{Bibliographie}
   \bibliography{biblio}
