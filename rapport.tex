@@ -1,0 +1,149 @@
+\documentclass[a4paper,10pt]{report}
+\usepackage[frenchb]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{mathenv}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[final]{pdfpages} 
+
+\usepackage{amssymb}
+
+\newcounter{cnt}
+\newcommand{\definition}{
+  \addtocounter{cnt}{1}
+ \textbf{Définition}
+}
+
+
+
+% Title Page
+\title{Université d'Angers \\  \emph{M2 Intelligence Décisionnelle \\} \hrulefill \\ \textbf{Recherche de motifs fréquents par algorithmes évolutionnaires} \\ \hrulefill}
+\author{Ugo Rayer}
+
+
+\begin{document}
+
+    \begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\center 
+
+\textsc{\LARGE Université d'Angers}\\[1.5cm] 
+\textsc{\Large M2 Intelligence Décisionnelle}\\ [0.5cm] 
+\textsc{\large }\\[0.5cm] 
+
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Recherche de motifs fréquents par algorithmes évolutionnaires}\\[0.4cm] 
+\HRule \\[1.5cm]
+ 
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Auteur:}\\
+Ugo \textsc{Rayer} 
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\hfill
+\begin{tabular}{@{}l@{}}
+\emph{Encadrants:}\\
+Benoit \textsc{Da Mota} \\
+Béatrice \textsc{Duval} \\
+David \textsc{Lesaint} 
+\end{tabular}
+\end{flushright}
+\end{minipage}\\[4cm]
+
+
+
+{\large \today}\\[3cm] 
+
+
+
+\includegraphics{./img/ua.jpg}\\[1cm]
+
+\vfill 
+
+\end{titlepage}
+
+\newpage
+~
+\newpage
+\chapter*{Remerciements}
+
+Avant toute chose, je tiens à remercier l'ensemble des personnes qui ont participé, de près ou de loin, à la réalisation de ce stage et à l'écriture de ce rapport. \\
+
+\hspace{0.2cm}Des remerciements spéciaux sont adressés d'une part au Laboratoire d'Etude et de Recherche en Informatique d'Angers pour son accueil et d'autre part au projet GRIOTE de la région Pays de la Loire qui a financé cette étude. Ensuite, je tiens à remercier chaleureusement Madame Duval et Messieurs Da Mota et Lesaint pour la qualité de leur encadrement et les différentes remarques qu'ils m'ont prodiguées pendant ces quelques mois. \\
+
+\hspace{0.2cm}Enfin, un grand merci à Josépha pour ses précieux conseils d'écriture malgré l'incompréhension générale des sujets abordés.
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+Le calcul des motifs fréquents est une notion essentielle dans de nombreux domaines liés à la découverte et l'extraction de connaissances. Initiallement introduit par Agrawal et al. dans \cite{AGR93}, ces motifs étaient alors utilisés pour l'établissement de règles d'associations visant à caractériser les habitudes d'achats de clients d'un supermarché. Par exemple, une règle de la forme "Pain \& Beurre $\Rightarrow$ Jambon (75\%)" signifie que 3 clients sur 4 achetant du pain et du beurre achètent également du jambon. Le calcul de telles règles se fait en deux étapes, dont la principale (i.e. disposant de la plus grosse complexité calculatoire) correspond au calcul des motifs fréquents. Depuis son introduction, le problème du calcul des motifs fréquents a été très largement étudié et appliqué à de nombreux domaines comme en bio-informatique, en cybersécurité et bien évidemment en marketing.\\
+
+\hspace{0.15cm}L'avènement de l'ère du Big Data a fait rentrer le problème de calcul des motifs fréquents dans une nouvelle dimension. En effet, le volume de données produites dans tous les domaines a cru de manière vertigineuse ces dernières années, rendant l'extraction de connaissances d'autant plus nécessaire et délicate. De fait, la problématique du passage à l'échelle des méthodes exactes est devenue primordiale. Bien que divers efforts en ce sens aient été faits au travers de nombreuses publications, ils se concentrent généralement sur l'optimisation et la parallélisation des méthodes existantes. \\
+
+\hspace{0.15cm}Les algorithmes évolutionnaires font partie des techniques de résolution de problèmes combinatoires appelées méta-heuristiques. Les méta-heuristiques regroupent un ensemble de méthodes approchées à la résolution de problème combinatoire. Elles sont naturellement envisagée lorsque la complexité du problème étudié ne permet pas l'usage de méthodes exactes (aussi bien en temps qu'en espace). Le principe des algorithmes évolutionnaires est de manipuler un ensemble d'individus représentant chacun une solution au problème étudié. A chaque itération, certains individus sont modifiés via des opérateurs de croisement et de mutation. Chaque individu est évalué au regard d'une fonction à optimiser dépendant du problème étudié. \\
+
+\hspace{0.15cm}Ainsi, nous formaliserons le problème de calcul de motifs fréquents dans la section suivante avant d'effectuer un état de l'art des méthodes existantes en section 3. Le chapitre 4 sera dédié à la présentation de notre méthode dont nous présenterons les résultats en section 5. Le dernier chapitre sera consacré à la conclusion de cette étude et à une ouverture vers de futurs travaux.
+
+\newpage
+\chapter{Le problème du calcul motifs fréquents}
+
+\section{Définition du problème}
+	La définition la plus courante du problème de calcul des motifs fréquents se fait par la théorie des ensembles. Nous verrons cependant dans le chapitre suivant qu'il peut également être décrit par la théorie des graphes. Nous présenterons dans un premier temps un cadre formel nécessaire à la définition du problème que nous illustrerons ensuite. Enfin, nous introduirons quelques propriétés dérivés de la définition du problème.
+
+\subsection{Formalisation}
+	Soit $\mathcal{I}$ un ensemble de \emph{symboles} appelées \textbf{items}. Quelque soit \emph{I} $ \subseteq \mathcal{I}$, \emph{I} est un \emph{motif} appelé \textbf{itemset}. \\
+
+\hspace{0.15cm}Soit $\mathcal{T}$ = \{ \emph{$t_{1}$, ... , $t_{n}$ } \} un ensemble de \textbf{transactions}. Chaque élément \emph{$t_{i}$} est un couple $< tid, \emph{I} >$ où \emph{tid} est l'identifiant de la transaction et \emph{I} $\subseteq \mathcal{I}$. $\mathcal{T}$ est communément appelé \textbf{base de transactions}.  \\
+
+\hspace{0.15cm}Pour tout itemset \emph{I} $\subseteq \mathcal{I}$ la \textbf{couverture} de \emph{I} par $\mathcal{T}$ est définie par : \\
+\begin{center}
+\textbf{cover$_{\mathcal{T}}$}(\emph{I}) = \{ \emph{t} $\in \mathcal{T}  | \emph{ I} \subseteq \emph{t }\}$
+\end{center}
+
+\hspace{0.15cm}La cardinalité de la couverture d'un itemset \emph{I} par $\mathcal{T}$ \\
+\begin{center}
+\textbf{sup$_{\mathcal{T}}$}(\emph{I}) = $|$ \textbf{cover$_{\mathcal{T}}$}(\emph{I}) $|$
+\end{center}
+est appelée \textbf{support} de \emph{I}.  Etant donné un support minimal \emph{minsup} l'ensemble des \textbf{itemsets} (i.e. motifs) \textbf{fréquents} est défini par : \\
+\begin{center}
+$\textbf{F}_{\mathcal{T},minsup}$ = \{ \emph{I} $\subseteq \mathcal{I } |$  $sup_{\mathcal{T}}(\emph{I}) \geq$ \emph{minsup} \}
+\end{center}
+
+\hspace{0.15cm}Le problème du \textbf{calcul des itemsets fréquents} ( \textbf{FIM} - \emph{Frequent Itemsets Mining}) est, étant donné une base de transactions $\mathcal{T}$ et un support minimal \emph{minsup} de calculer l'ensemble \emph{F} des itemsets fréquents. Comme F. Boden le remarque dans \cite{BOD06}, bien qu'historiquement définie comme une valeur relative et donc asujettie à un support minimal défini dans l'intervalle [0,1], le support est de nos jours mesuré de manière absolue. Si nécessaire, nous y ferons référence sous la notion de fréquence : \\
+\begin{center}
+$\textbf{Freq}_{\mathcal{T}}$(\emph{I}) = $\frac{ | \textbf{ cover$_{\mathcal{T}}$}(\emph{I})  | } { | \mathcal{T} | }$
+\end{center}
+avec \emph{minfreq} simplement définie par $\frac{\emph{minsup}}{| \mathcal{T} |}$. \\
+
+\subsection{Exemple}
+	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article) : \\
+
+
+\cite{AGR94}
+\cite{BRI97} 
+\cite{PEI00} 
+\cite{BOR03} 
+\cite{PEI01} 
+\cite{PAS99} 
+\cite{ZAK99}
+\cite{HAN04}
+\cite{BOD06}
+\cite{GOE}
+
+  \addcontentsline{toc}{chapter}{Bibliographie}
+  \bibliography{biblio}
+  \bibliographystyle{unsrt}
+
+\end{document}
