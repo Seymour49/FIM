@@ -1,13 +1,19 @@
 \documentclass[a4paper,10pt]{report}
 \usepackage[frenchb]{babel}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{mathenv}
-\usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage[final]{pdfpages} 
+\usepackage{changepage}
+\usepackage{graphicx}
+
+\usepackage{array}
+
+\usepackage[linesnumbered,ruled]{algorithm2e}
 
 \usepackage{amssymb}
 
@@ -161,9 +167,16 @@ Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un item
 
 \section{Problème des itemsets clos maximaux}
 
-	Afin de réduire l'espace de recherche, il a été proposé de contraindre la recherche à l'ensemble des itemsets clos. Un k-itemset\emph{X} fréquent est clos si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \forall  $ \emph{Y} tel que \emph{X} $ \subset $ \emph{Y}.  Un itemset clos est maximal si aucun de ses surensembles n'est fréquent. Ainsi dans notre exemple, l'ensemble des itemsets clos est   $\textbf{C}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (b:3), (cp:3), (fcam:3) \} et l'ensemble des itemsets clos maximaux est  $\textbf{MC}_{\mathcal{T},3}$ =  $\textbf{C}_{\mathcal{T},3} - $ \{ (f:4), (c:4) \}. \\
+	Afin de réduire l'espace de recherche, il a été proposé de contraindre la recherche à l'ensemble des itemsets clos. Un k-itemset\emph{X} fréquent est clos si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \forall  $ \emph{Y} tel que \emph{X} $ \subset $ \emph{Y}.  Un itemset clos est maximal si aucun de ses surensembles n'est fréquent. Ainsi dans notre exemple, l'ensemble des itemsets clos est   $\textbf{C}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (b:3), (cp:3), (fcam:3) \} et l'ensemble des itemsets clos maximaux est  $\textbf{MC}_{\mathcal{T},3}$ =  $\textbf{C}_{\mathcal{T},3} - $ \{ (f:4), (c:4) \}. La figure suivante représente le treillis complet des différents itemsets possibles sur les objets fréquents. Y figurent d'une part les itemsets fréquents en vert, d'autre part les itemsets clos en jaune et enfin les itemsets clos maximaux en rouge. Pour plus de lisibilité, les itemsets non-fréquents ne figurent pas dans le treillis.\\
 
-[Insertion figure ] \\
+\begin{figure}
+	\begin{adjustwidth}{-2.7cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=15cm,height=12cm]{./img/treillis_is.jpg}\\
+	\end{tabular}
+	\caption{\label{fig:text}Treillis des itemsets fréquents, clos et clos maximaux de notre exemple}
+	\end{adjustwidth}
+\end{figure}
 
 Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivés de l'ensemble des itemsets clos maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux. \\
 
@@ -176,6 +189,46 @@ Dans ce chapitre, nous nous attacherons à présenter les principales méthodes 
 
 	Un an après avoir introduit le problème des règles d'associations (et par conséquent le problème de calcul des itemsets fréquents) dans \cite{AGR93}, les auteurs ont proposé l'algorithme A Priori \cite{AGR94} restant la référence littéraire du domaine. De nombreux papiers proposent des optimisations et dérivation d'A Priori. Son principe général est la génération de k+1-itemsets candidats à partir des k-itemsets fréquents précédemment calculés. L'algorithme 1 présente la phase de calcul des itemsets fréquents par A Priori. Nous ne présenterons pas l'algorithme calculant les règles d'associations dans cette étude. \\ 
 
+
+\begin{algorithm}[H]
+\caption{APriori Itemset Mining}
+\SetKwInOut{Input}{Input}
+
+\SetKwInOut{Output}{Output}
+\Input{ $\mathcal{T}, \emph{minsup}$ }
+\Output{ $\textbf{F}_{\mathcal{T},minsup}$ }
+\Begin{
+	
+	$\emph{C}_{1}$ = \{ \{ \emph{i} \} $| \in \mathcal{I}$ \} \\
+	\emph{k} = 1 \\
+    \While{ $\emph{C}_{\emph{k}} \neq \{ \}$ } {
+	// Calcul du support de chaque itemset candidat \\
+        	\ForAll{ \emph{t} = ( \emph{tid, I} ) $ \in \mathcal{T} $ }{
+		\ForAll{itemset candidat \emph{X} $\in \emph{C}_{k}$ } {
+			\If{ \emph{X} $\subseteq$ \emph{I} }{
+				\emph{X.support }++ \\
+			}
+		}
+	}
+	// Extraction de l'ensemble des itemsets fréquents \\
+	$\textbf{F}_{\emph{k} } = \{ \emph{X } | \emph{ X.support} \geq \emph{minsup} \} $ \\
+	// Génération des candidats de taille k+1 \\
+	\ForAll{ \emph{X, Y} $\in \textbf{F}_{\emph{k}} | $ \emph{X}[i] = \emph{Y}[i] $\forall i \in [1,k-1] \& \emph{ X}[k] < \emph{Y}[k]  $ }{
+		\emph{I} = \emph{X} $\cup$  \{ \emph{Y}[k] \} \\
+		\If{ $\forall \emph{J} \subset \emph{I}, | \emph{J}| = \emph{k}$ et \emph{J} $\in \textbf{F}_{\emph{k}} $ }{
+			$\emph{C}_{\emph{k+1}} =  \emph{C}_{\emph{k+1}} \cup \emph{I}$ \\
+
+		}
+	}
+        
+	\emph{k} ++
+    }
+
+    
+
+}
+
+\end{algorithm}
 
 \cite{BRI97} 
 \cite{PEI00} 
