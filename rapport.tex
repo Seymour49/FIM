@@ -13,6 +13,8 @@
 
 \usepackage{array}
 
+\usepackage{caption}
+
 \usepackage[linesnumbered,ruled]{algorithm2e}
 
 \usepackage{amssymb}
@@ -134,7 +136,7 @@ $\textbf{Freq}_{\mathcal{T}}$(\emph{I}) = $\frac{ | \textbf{ cover$_{\mathcal{T}
 avec \emph{minfreq} simplement définie par $\frac{\emph{minsup}}{| \mathcal{T} |}$. \\
 
 \subsection{Exemple}
-	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article). Le talbeau 1 décrit chaque transaction par : un identifiant, une liste d'objets achetés et la liste des items fréquents vis à vis d'un support minimal de  3.\\
+	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article). Le tableau 1 décrit chaque transaction par : un identifiant, une liste d'objets achetés et la liste des items fréquents vis à vis d'un support minimal de  3.\\
 
 \begin{tabular}{|c|l|l|}
 	\hline
@@ -151,8 +153,9 @@ avec \emph{minfreq} simplement définie par $\frac{\emph{minsup}}{| \mathcal{T} 
 	500 & a, f, c, e, l, p, m, n & f, c, a, m, p \\
 	\hline	
 \end{tabular}
+\captionof{table}{Base de transactions exemple}
 \vspace{0.4cm}
-\\
+
 \hspace{0.15cm}Une fois calculé, l'ensemble des itemsets fréquents vis à vis de ce jeu de données $\mathcal{T}$ est l'ensemble $\textbf{F}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (a:3), (b:3), (m:3), (p:3), (fc:3), (fa:3), (fm:3), (cm:3), (cp:3), (ca:3), (am:3), (fca:3), (fcm:3), (fam:3), (cam:3), (fcam:3) \}.  \\
 
 \subsection{Complexité et Propriétés}
@@ -178,16 +181,16 @@ Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un item
 	\end{adjustwidth}
 \end{figure}
 
-Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivés de l'ensemble des itemsets clos maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux. \\
+Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivée de l'ensemble des itemsets clos maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux. \\
 
 \chapter{Etat de l'art}
-Dans ce chapitre, nous nous attacherons à présenter les principales méthodes de la littérature pour le calcul des itemsets fréquents. La première section sera dédiée à la présentation des méthodes exactes. Nous y aborderons les trois principaux algorithmes que sont A Priori \cite{AGR94}, Eclat \cite{ZAK00} et FP-Growth \cite{HAN04}. D'autres méthodes dédiées au calcul des itemsets clos maximaux seront également abordées. Enfin nous introduirons quelques méthodes présentant un intérêt pour la problématique du passage à l'échelle. La section 2 sera consacrée aux méthodes métaheuristiques de la littérature. [TO COMPLETE ] \\
+\hspace{0.15cm}Dans ce chapitre, nous nous attacherons à présenter les principales méthodes de la littérature pour le calcul des itemsets fréquents. La première section sera dédiée à la présentation des méthodes exactes. Nous y aborderons les trois principaux algorithmes que sont A Priori \cite{AGR94}, Eclat \cite{ZAK00} et FP-Growth \cite{HAN04}. D'autres méthodes dédiées au calcul des itemsets clos maximaux seront également abordées. Enfin nous introduirons quelques méthodes présentant un intérêt pour la problématique du passage à l'échelle. La section 2 sera consacrée aux méthodes métaheuristiques de la littérature. [TO COMPLETE ] \\
 
 \section{ Méthodes exactes}
 
 \subsection{A Priori}
 
-	Un an après avoir introduit le problème des règles d'associations (et par conséquent le problème de calcul des itemsets fréquents) dans \cite{AGR93}, les auteurs ont proposé l'algorithme A Priori \cite{AGR94} restant la référence littéraire du domaine. De nombreux papiers proposent des optimisations et dérivation d'A Priori. Son principe général est la génération de k+1-itemsets candidats à partir des k-itemsets fréquents précédemment calculés. L'algorithme 1 présente la phase de calcul des itemsets fréquents par A Priori. Nous ne présenterons pas l'algorithme calculant les règles d'associations dans cette étude. \\ 
+\hspace{0.15cm}Un an après avoir introduit le problème des règles d'associations (et par conséquent le problème de calcul des itemsets fréquents) dans \cite{AGR93}, les auteurs ont proposé l'algorithme A Priori \cite{AGR94} restant la référence littéraire du domaine. Son principe général est la génération de k+1-itemsets candidats à partir des k-itemsets fréquents précédemment calculés. L'algorithme 1 présente la phase de calcul des itemsets fréquents par A Priori. Nous ne présenterons pas l'algorithme calculant les règles d'associations dans cette étude. \\ 
 
 
 \begin{algorithm}[H]
@@ -224,11 +227,116 @@ Dans ce chapitre, nous nous attacherons à présenter les principales méthodes 
 	\emph{k} ++
     }
 
-    
-
 }
 
 \end{algorithm}
+
+\hspace{0.15cm}Comme nous pouvons le constater, l'algorithme considère dans un premier temps l'ensemble des items comme candidats avant d'effectuer un premier scan de la base $\mathcal{ T }$ . Les 1-itemsets retenus sont utilisés pour générer des candidats de taille 2. L'algorithme poursuit cette routine jusqu'à ce qu'aucun candidat ne soit généré. \\
+
+\hspace{0.15cm}Différentes implémentations efficaces ont été proposées pour améliorer la rapidité et l'espace mémoire nécessaire à l'exécution de l'algorithme Apriori. En général, les optimisations sont basées sur l'utilisation de structures spécifiques pour la représentation de la base de transactions et des itemsets candidats. Par exemple, \cite{BRI97} utilise un arbre préfixe pour stocker les itemsets candidats. D'autres structures incluant des vecteurs, des arbres de hachage et des structures hybrides existent également.\\
+
+\hspace{0.15cm}Enfin, nous pouvons également mentionner l'existence d'implémentations d'Apriori utilisant le paradygme de la programmation parallèle. Par exemple \cite{YE06} présente une méthode parallèle partitionnant la base de transactions en sous-bases chacune assignée à un processeur différents. Une fois le calcul des k-itemsets localement fréquents, les résultats sont transmis à un noeud maître effectuant une centralisation des résultats. Notons également l'emploi de vecteurs pour stocker les 1 et 2-itemsets puis un arbre préfixe ensuite. \\
+
+\subsection{Eclat}
+
+\hspace{0.15cm}A la différence d'Apriori, qui effectue un parcours du treillis des candidats en largeur, Eclat est le premier algorithme à utiliser une représentation verticale de la base de transactions pour effectue une recherche en profondeur. Ainsi, Zaki et al. ont proposé cet algorithme dans \cite{ZAK00} en même temps que divers autres algorithmes dont certains basés sur une relation de pseudo-equivalence de cliques maximales.  \\
+
+\hspace{0.15cm}Le tableau suivant  illustre la base de transactions utilisées dans l'exemple précédent représentée verticalement. Ainsi, nous ne traitons plus une liste d'items par transaction, mais une liste d'identifiants de transaction par item. Une telle liste est appelée \emph{tid-list}. De plus, Eclat utilise la notion de classe d'équivalence pour distribuer le calcul des itemsets candidats sur différents processeurs. Par exemple, les itemsets \emph{ABC} et \emph{ABD} appartiennent à la même classe d'équivalence $\mathcal{E}_\emph{AB}$.
+
+\begin{center}
+
+\begin{tabular}{|c|l|}
+	\hline
+	Item & \emph{tid-lists} \\
+	\hline
+	f & 100 200 300 500 \\
+	\hline
+	c & 100 200 400 500 \\
+	\hline
+	a & 100 200 500\\
+	\hline
+	b & 200 300 400 \\
+	\hline
+	m & 100 200 500 \\
+	\hline
+	p & 100 400 500\\
+	\hline
+\end{tabular}
+\captionof{table}{Base de transactions verticale}
+
+\vspace{0.4cm}
+\end{center}
+
+L'algorithme 2 présente la structure générale de l'algorithme Eclat. Le principe général est une recherche en profondeur d'abord calculant pour chaque item fréquent l'ensemble des itemsets le contenant. Un \emph{k+1}-itemset candidat est généré à partir de deux \emph{k}-itemsets partageant un même préfixe de taille \emph{k-1} et son support est calculé par l'intersection des \emph{tid-lists} des deux \emph{k}-itemsets. Dans le but de réduire le nombre de candidats générés, il est important de noter l'ordonnancement des items par support croissant.
+
+\begin{algorithm}[H]
+\caption{Eclat}
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\Input{ $\mathcal{T}, \emph{minsup} , \emph{I} \subseteq \mathcal{I} $ (préfixe, initiallement $\emptyset$ ) }
+\Output{ $\textbf{F}[\emph{I}](\mathcal{T},minsup) $= ensemble des k-itemsets fréquents partageant le même préfixe \emph{I} }
+\Begin{
+	$\textbf{F}[\emph{I }] = \emptyset $ \\
+	\ForAll{ $\emph{i} \in \mathcal{T}$ }{
+		$\textbf{F}[\emph{I }] $ = $\textbf{F}[\emph{I }] \cup \{ \emph{I} \cup \{i\} \}$ \\
+		// Création des candidats de taille $|\emph{I }| + 1$ \\
+		$\mathcal{D}^{i} = \emptyset $ \\
+		\ForAll{$ \emph{j} \in \mathcal{ T } | \emph{j} > \emph{i}$ }{
+			C = \emph{tid-list}[\{i\}] $\cap$ \emph{tid-list}[\{j\}] \\
+			\If{ $|C| > \emph{minsup}$ }{ 
+				$\mathcal{D}^{i} = \mathcal{D}^{i} \cup \{ (\emph{j}, C) \} $ \\
+			}
+		}
+	// Récursion en profondeur sur \emph{i} \\
+	Calculer $\textbf{F}[\emph{I } \cup \{\emph{i}\}](\mathcal{D}^{i}, \emph{minsup}$ ) \\
+	$\textbf{F}[\emph{I }] = \textbf{F}[\emph{I }] \cup \textbf{F}[\emph{I} \cup \{\emph{i}\}] $\\
+	}
+}
+
+\end{algorithm}
+
+Sur notre exemple, l'algorithme Eclat extrairait dans un premier temps les itemsets contenant l'item \emph{p}, puis ceux contenant \emph{m} mais non \emph{p} etc. La propriété de monotonie du support n'est pas totalement employée puisqu'un itemset n'est pas candidat à condition que l'intégralité des ses sous-ensembles soient fréquents mais uniquement 2. Diverses améliorations ont été proposées dont une par les auteurs originels d'Eclat introduisant la notion de \emph{diffset} utilisée pour le calcul du support d'un itemset candidat. Références et détails sont disponibles dans \cite{GOE}. \\
+
+\subsection{FP-Growth}
+
+\hspace{0.15cm}Le dernier des 3 algorithmes les plus répandus et étudiés de la littérature est l'algorithme FP-Growth. Proposé par Han et al. dans \cite{HAN04}, il est également basé sur un parcours en profondeur item après item. Toutefois, il utilise une structure de données particulière, FP-Tree, permettant de condenser la base de transactions et d'en extraire diverses informations supplémentaires (distribution des items, bases conditionnelles de motifs...). Dans un premier temps nous introduirons la structure de FP-Tree en construisant celui associé à notre base de transactions exemple.
+
+\subsubsection{Structure FP-Tree}
+
+\hspace{0.15cm}Un FP-Tree est un arbre de préfixes construit à partir d'une base de transactions $\mathcal{T }$ et un support minimum \emph{minsup}. La construction d'un tel arbre se fait via deux scans de la base $\mathcal{T}$. Le premier permet de calculer $\mathcal{L}_{FI}$ = \{ (\emph{i}, C)$ | \emph{i} \in \mathcal{I}$ et C = \textbf{$sup_{\mathcal{T}}$}(\emph{\{i\}}) \}. \\
+Cette liste est ensuite ordonnée par support décroissant. Sur notre exemple, le premier scan de $\mathcal{T}$ nous donne la liste suivante : \\
+\begin{center}
+	$ \mathcal{L}_{FI}$ = \{ (\emph{f}, 4), (\emph{c}, 4), (\emph{a}, 3), (\emph{b},3 ), (\emph{m}, 3), (\emph{p}, 3) \} \\
+\end{center}
+
+La seconde étape va nous permettre via cette liste de construire l'arbre de préfixe T de la manière suivante. Premièrement, un noeud null correspondant à la racine de l'arbre, de même qu'une header-table comprenant pour chaque item son label, le support de l'1-itemset qu'il induit et un pointeur vers le premier noeud de l'arbre portant le même label (initialisé à null). Un récapitulatif de cette première étape est visuellement présenté dans la figure suivante. \\
+
+\begin{figure}
+	\begin{adjustwidth}{-1cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=15cm,height=5cm]{./img/fptree_init.jpg}\\
+	\end{tabular}
+	\caption{\label{fig:text}FP-Tree T après initialisation}
+	\end{adjustwidth}
+\end{figure}
+
+Ensuite, chaque transaction \emph{t} de la base $\mathcal{T}$ est de nouveau scannée. Soit $[ p | P ]$ la liste des items \emph{i} $\in$ \emph{t} où p est le premier item et P le reste de la liste. Un noeud de l'arbre possède les informations suivantes : un label, un compteur, un pointeur vers son père et une liste de pointeurs vers ses noeuds fils. La fonction d'insertion de $[ p | P ]$  dans T est alors appelée et fonctionne comme suit. Si T fonctionne un fils N tel que le label de N soit le même que le label de p, alors on incrémente simplement le compteur de N de 1. Sinon, nous créons N avec un compteur initialisé à 1 et ayant T pour parent. On relie ensuite le dernier pointeur de la header-table correspondant au label de p à ce nouveau noeud N. Pour terminer, si P (le reste de la liste des items fréquents dans la transaction \emph{t}) est non vide, on appelle récursivement cette fonction avec P et N en paramètres. \\
+Le processus est explicité dans la figure suivante présentant l'évolution du FP-Tree après lecture des deux premières transactions et après l'intégralité de la base. \\
+
+\begin{figure}
+	\begin{adjustwidth}{-4cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=20cm,height=8cm]{./img/t1.jpg}\\
+	\includegraphics[width=20cm,height=8cm]{./img/fp_tree.jpg}\\
+	\end{tabular}
+	\caption{\label{fig:text}FP-Tree T après t1 et t2 et FP-Tree final}
+	\end{adjustwidth}
+\end{figure}
+
+
+Une fois cet arbre obtenu, l'algorithme d'extraction des itemsets fréquents suivant peut être appelé. Nous le décrivons dans la section suivante. \\
+\newpage
+\subsection{Extraction des itemsets fréquents}
 
 \cite{BRI97} 
 \cite{PEI00} 
