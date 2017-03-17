@@ -333,12 +333,36 @@ Le processus est explicité dans la figure suivante présentant l'évolution du 
 	\end{adjustwidth}
 \end{figure}
 
-
-Une fois cet arbre obtenu, l'algorithme d'extraction des itemsets fréquents suivant peut être appelé. Nous le décrivons dans la section suivante. \\
 \newpage
-\subsection{Extraction des itemsets fréquents}
+\subsubsection{Extraction des itemsets fréquents}
+\hspace{0.15cm}Une fois le FP-Tree obtenu à partir de $\mathcal{T}$, l'extraction des itemsets fréquents se fait de manière récursive en profondeur d'abord sur chacun des 1-itemsets contenus dans la header-table. Le principe d'augmentation de motif décrit est basé sur le calcul de base conditionelle de motifs depuis le FP-Tree. Le processus récursif se fait via le calcul de nouvelles bases conditionnelles sur les motifs venant d'être augmenté via la création de FP-Tree conditionnel sur ces bases. \\
 
-\cite{BRI97} 
+La base conditionnelle d'un itemset $\emph{I}_{1}...\emph{I}_{k}$ correspond à l'ensemble des chemins du FP-Tree où l'itemset apparaît. L'algorithme traite les 1-itemsets de la header table du moins fréquent au plus fréquent et calcule pour chacun l'ensemble des itemsets fréquents le contenant. Le calcul de cette base conditionnelle se fait grâce à  la propriété suivante : \\
+
+\emph{Pour chaque item fréquent $a_{i}$, l'ensemble des motifs contenant uniquement des items fréquents et $a_{i}$ peut être obtenu en suivant les noeuds-liens de $a_{i}$ en commençant par le noeud de la header-table.} \\
+
+Sur notre exemple, l'extraction des itemsets fréquents commence avec l'item \emph{p}. En suivant les liens de la header-table pour l'item \emph{p}, nous pouvons extraire deux chemins le contenant (f:4, c:3, a:3, m:2, p:2) et (c:1, b:1, p:1). N'apparaissant respectivement que deux et une fois avec \emph{p}, nous conservons donc les préfixes (fcam:2) et (cb:1) qui forment la base conditionnelle de \emph{p}. La construction d'un FP-Tree sur cette base conditionnelle, appelé FP-Tree conditionnel de \emph{p} et dénoté FP-Tree$|_{p}$, mène à la création d'un seul noeud (c:3) et par conséquent  seul l'itemset (cp:3) est dérivé. Ne pouvant construire de base conditionnelle sur FP-Tree$|_{p}$, la recherche associée à l'item \emph{p} est terminée et les deux itemsets fréquents le contenant sont (cp:3) et (p:3). \\
+L'extraction des itemsets où figurent l'item \emph{m} est décrit dans la figure suivante. La base conditionnelle de\emph{m} mène à la construction d'un FP-Tree conditionnelle devant être exploité, enclenchant ainsi la récursion en profondeur. Il est toutefois important de noter que lors de la construction d'un tel arbre, les items doivent être ordonnés par fréquence décroissante du nombre de noeuds dans lequel ils figurent.
+
+\begin{figure}
+	\begin{adjustwidth}{-1cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=15cm,height=7cm]{./img/mining_m.jpg}\\
+	\end{tabular}
+	\caption{\label{fig:text}Extraction des itemsets contenant \emph{m}}
+	\end{adjustwidth}
+\end{figure}
+
+La génération des itemsets fréquents via la base conditionnelle d'un sous-motifs se fait grâce à la propriété suivante : \\
+
+\emph{Soit $\alpha$ un itemset fréquent dans $\mathcal{T}$, soient $\mathcal{T}_{\alpha}$ la base conditionnelle de motifs d'$\alpha$ et $\beta$ un itemset $\in \mathcal{T}_{\alpha}$ Alors $\alpha \cup \beta$ est fréquent dans $\mathcal{T}$ si et seulement si $\beta$ est fréquent dans $\mathcal{T}_{\alpha}$}. \\
+
+Différentes optimisations sont proposées pour accélérer le processus d'extraction. La principale et plus intéressante est liée à la topologie du FP-Tree. En effet, si celui-ci contient un seul chemin, alors l'ensemble des itemsets fréquents peut être obtenu en énumérant l'ensemble des combinaisons d'items le long de ce chemin avec pour support celui de l'item y appartenant ayant le plus faible. Sur notre exemple, nous aurions par exemple pu énumérer l'ensemble des combinaisons du FP-Tree$|_{m}$ pour en extraire l'intégralité des itemsets le contenant. Cette propriété a été étendue pour exploiter les arbres contenant un préfixe unique en considérant ce préfixe comme un chemin unique ( énumération des combinaisons) et la partie multiple comme un autre FP-Tree en ajoutant une racine au niveau de l'embranchement. Ainsi, l'extraction complète se fait par l'union des itemsets produit par l'énumération avec ceux produits par le processus récursif et enfin avec les itemsets obtenus par combinaisons d'éléments appartenant à l'un et l'autre des ensembles. \\
+
+Bien qu'étant les trois références en matière de méthodes exactes pour l'extraction des itemsets fréquents, ces algorithmes ont malheureusement de nombreuses difficultés à être comparés. En effet, différentes optimisations et implémentations ayant été proposées, de nombreux articles de la littérature présentent des conclusions différentes sur l'efficacité des méthodes. Nous pouvons toutefois considérer que chaque algorithme possède des performances variables principalement selon les caractéristiques du jeu de données étudié et de la qualité de l'implémentation qui en est faite. Nous allons maintenant présenter rapidement quelques algorithmes pour la recherche des itemsets clos avant d'introduire les méta-heuristiques utilisées pour résoudre ce problème.
+
+\subsection{Algorithmes pour itemsets clos/maximaux}
+
 \cite{PEI00} 
 \cite{BOR03} 
 \cite{PEI01} 
