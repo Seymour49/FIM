@@ -177,7 +177,7 @@ Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un item
 	\begin{tabular}{l}
 	\includegraphics[width=15cm,height=12cm]{./img/treillis_is.jpg}\\
 	\end{tabular}
-	\caption{\label{fig:text}Treillis des itemsets fréquents, clos et clos maximaux de notre exemple}
+	\caption{\label{fig:text}Treillis des itemsets fréquents, clos et maximaux de notre exemple}
 	\end{adjustwidth}
 \end{figure}
 
@@ -363,7 +363,16 @@ Bien qu'étant les trois références en matière de méthodes exactes pour l'ex
 
 \subsection{Algorithmes pour itemsets clos/maximaux}
 
-\cite{PEI00} 
+De la même manière que trois algorithmes pour les itemsets fréquents ont été présentés, trois pour l'extraction des itemsets clos le seront également. Toutefois, nous serons plus succint et renverrons le lecteur au article correspondant quand nécessaire. Ainsi, nous présenterons rapidement les algorithmes A-Close (\cite{PAS99}) et Charm (\cite{ZAK99})puis un peu plus longuement l'algorithme Closet, utilisant également un FP-Tree pour fonctionner (\cite{PEI00}). \\
+
+\subsubsection{A-Close}
+\hspace{0.15cm}Proposé par Pasquier et al. en 1999 dans \cite{PAS99}, l'algorithme A-Close est l'adaptation d'A Priori  pour l'extraction des itemsets clos. Il est composé de deux phases. La première effectue une recherche bottom-up dans le but d'identifier l'ensemble des \emph{générateurs}, i.e. les plus petits itemsets qui déterminent un itemset clos via l'opérateur de clôture défini sur la correspondance de Galois entre itemsets et transactions. Le calcul des \emph{générateurs} se fait via une légère modification d'A Priori. En effet, à chaque fois qu'un ensemble de candidats est généré, A-Close calcule leur support et élimine l'ensemble des non-fréquents. Pour chaque itemset candidat restant, leur support est comparé à celui de ses sous-ensembles calculé au niveau précédent. Si le support d'un candidat égale celui d'un de ses sous-ensembles, cet itemset ne peut pas être un \emph{générateur} et est donc supprimé. Cette phase continue jusqu'à ce qu'aucun \emph{générateur} ne soit produit. \\
+
+\hspace{0.15cm} La seconde phase de l'algorithme A-Close consiste, une fois l'ensemble des \emph{générateurs} obtenus, à calculer la clôture de chacun d'entre eux et à éliminer les redondances. Le calcul de la clôture d'un itemset se fait par l'intersection de l'ensemble des transactions dans lesquelles cet itemset apparaît. Ce calcul peut se faire via un seul scan du jeu de données sous réserve que l'intégralité des \emph{générateurs} tient en mémoire centrale.
+
+\subsubsection{Charm}
+\hspace{0.15cm} De la même manière qu'A-Close, Charm définit une correspondance de Galois entre les ordres partiels induits par les itemsets et les transactions. Toutefois, 
+
 \cite{BOR03} 
 \cite{PEI01} 
 
