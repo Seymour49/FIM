@@ -1,0 +1,91 @@
+Première définition du problème
+*[AGR 93] AGRAWAL R., IMIELINSKI T., SWANI A.N., "Mining association rules between sets of items in large databases",
+	 Proceedings of the 1993 ACM SIGMOD International Conference on Management of Data, ACM Press, pp.207-213, 1993.
+
+Méthodes exactes
+*[AGR 94] AGRAWAL R., SRIKANT R., "Fast algorithms for mining association rules in large databases", 
+	 VLDB '94: Proceedings of the 20th International Conference on Very Large Databases, Morgan Kaufmann Publishers Inc., pp. 487-499, 1994.
+
+*[BRI 97] BRIN S., MOTWANI R., ULLMAN J.D., TSUR S., "Dynamic Itemset Counting and Implication Rules for Market Basket Data" 
+
+*[PEI 01] PEI J., HAN J., LU H., NISHIO S., TANG S., YANG D, "H-Mine: Hyper-structure mining of frequent patterns in large databases",
+	  In Proc. 2001 Int. Conf. Data Mining (ICDM2001), San Jose, CA, pp. 441-448, 2001. 
+
+$[ZAK 01] ZAKI M.J., "Parallel sequence mining on shared-memory machines", Journal of Parallel and Distributed Computing,
+	 vol. 61, no. 3, pp. 401-426, 2001.
+
+*[BOR 03] BORGELT C., "Efficient implementations of A priori and Eclat", Proc. 1st IEEE ICDM Workshop on Frequent Item Set Mining Implementations (FIMI 2003),
+	 p. 90, 2003.
+
+*[YE 06] YE Y., CHNG C.-C., "A parallel Apriori algorithm for frequent item sets' mining", Proceedings of the Fourth International Conference on Software 
+	Engineering Research, Management and Applications, IEEE Computer Society, pp. 87-94, 2006.
+
+*[HAN 04] HAN J., JIAN P., YIWEN Y., RUNYING M., "Mining Frequent Patterns without Candidate Generation : A Frequent-Pattern Tree Approach",
+	 Data Mining and Knowledge Discovery, vol. 8, pp. 53-87, 2004
+
+Mesures de qualité d'une AR
+[FRE 99] FREITAS A.A., "On rule interestingness measures", Knowledge Based Systems, Elseiver, vol. 12, no. 5, pp309-315, 1999.
+
+[TAN 02] TAN P.-N., KUMAR V., SRIVASTAVA J., "Selecting the right interestingness measure for association patterns", 
+	 Proceedings of the Eight ACM SIGKDD conference, Edmonton, Canada, 2002.
+
+[GEN 06] GENG L., HAMILTON H., "Interestingness measures for data mining: a survey", ACM Computing Surveys (CSUR), vol. 38, no. 3, 2006.
+
+{HIL 13} HILDERMAN R., HAMILTON H.J., "Knowledge discovery and measures of interest", Springer Science & Business Media, vol. 638, 2013.
+
+[OHS 07] OHSAKI M., ABE H., TSUMOTO S. et al., "Evaluation of rule interestingness measures in medical knowledge discovery in databases",
+	 Artificial Intelligence in Medicine, vol. 41, pp. 177-196, 2007.
+
+[KHA 04] KHABZAOUI M., DHAENENS C., TALBI E.-G, "A multicriteria genetic algorithm to analyze microarray data", Congress on Evolutionary Computation,
+	 vol. 2, pp. 1874-1881, 2004.
+
+[JAC 13b] JACQUES J., TAILLARD J., DELERUE D. et al., "The benefits of using multi-objectivization for mining pittsburgh partial classification rules in 
+	  imbalanced and discrete data", Proceedings of the 15th annual conference on Genetic and evolutionary computation, ACM, pp. 543-550, 2013.
+
+Etat de l'art pour MH
+[JES 11] DEL JESUS M.J., GAMEZ J.A., GONZALES P. et al., "On the discovery of association rules by means of evolutionary algorithms", Wiley Interdisciplinary Reviews:
+	 Data Mining and Knowledge Discovery, Wiley Online Library, vol. 1, no. 5, pp. 397-415, 2011.
+
+[MUK 14a] MUKHOPADHYAY A., MAULIK U., BANDYOPADHYAY S. et al., "A survey of multi-objective evolutionary algorithms for data mining: Part II", 
+	  IEEE Transactions on Evolutionary Computation, IEEE, vol. 18, no. 1, pp. 20-35, 2014.
+
+[FRE 08] FREITAS A.A., "A review of evolutionary algorithms for data mining", Soft Computing for Knowledge Discovery and Data Mining, Springer, pp. 79-111, 2008.
+
+Représentation solution 
+[BAC 07] BACARDIT J., BUTZ M.V., "Data mining in learning classifier systems: comparing  XCS with GAssist", Learning classifier Systems, Springer, vol. 4399, pp. 282-290, 2007.
+
+[ANA 09] ANAND R., VAID A., SINGH P.K., "Association rule mining using multi-objective evolutionary algorithms: strengths and challenges", World Congress on Nature and Biologically
+	 Inspired Computing (NaBIC), IEEE, pp. 385-390, 2009.
+
+Fonctions objectif
+[GHO 04] GHOSH A., NATH B., "Multi-objective rule mining using genetic algorithms", Information Sciences, Elseiver, vol. 163, no. 1, pp. 123-133, 2004.
+
+(DEH 06) DEHURI S., JAGADEV A., GHOSH A. et al., "Multi-objective genetic algorithm for association rule mining using a homegeneous dedicated cluster of workstations",
+	 American Journal of Applied Sciences, vol. 3, no. 11, pp. 2086-2095, 2006.
+
+[HU 07] HU J., YANG-LI X., "Association rules mining using multi-objective coevolutionary algorithm", International Conference on Computational Intelligence and Security Workshops (CISW), IEEE, pp. 405-408, 2007.
+
+[YAN 09] YAN X., ZHANG C., ZHANG S., "Genetic algorithm-based strategy for identifying association rules without specifiying actual minimum support",
+	 Expert Systems with Applications, Elsevier, vol. 36, no. 2, pp. 3066-3076, 2009.
+
+Algorithmes
+
+[QOD 11] QODMANAN H.R., NASIRI M., MINAEI-BIDGOLI B., "Multi-objective association rule mining with genetic algorithm without specifying minimum support and minimum confidence", Expert Systems with applications, Elsevier, vol. 38, no. 1, pp. 288
+
+[ANA 09, KHA 04]
+
+[KHA 05] KHABZAOUI M., DHAENENS C., TALBI E.-G, "Parallel genetic algorithms for multi-objective rule mining", The 6th MIC2005, 2005.
+
+[KHA 08] KHABZAOUI M., DHAENENS C., TALBI E.-G, "Combining evolutionary algorithms and exact approaches for multi-objective knowledge discovery",
+	 RAIRO-Operations Research-Recherche Opérationnelle, vol. 42, no. 1, pp. 69-83, 2008.
+
+
+Méthode exactes pour itemsets clos :
+
+*[PEI 00] PEI J., HAN J., MAO R., "CLOSET: An efficient algorithm for mining frequent closed itemsets"
+	In Proc. 2000 ACM-SIGMOD Int. Workshop Data Mining and Knowledge Discovery (DMKD2000), Dallas, TX, pp. 11-20, 2000.
+
+*[PAS 99] PASQUIER N., BASTIDE Y., TAOUIL R.,LAKHAL L., "Discovering frequent closed itemsets for association rules". In Proc. 7th Int. Conf. Database Theory (ICDT'99), 	 pp. 398-416, Jerusalem, Israel, January 1999.
+
+*[ZAK 99] ZAKI M.J.,HSIAO C., "Charm: An efficient algorithm for closed association rule mining". In Technical Report 99-10 , Computer Science, 
+	 Rensselaer Polytechnic Institute, 1999.
