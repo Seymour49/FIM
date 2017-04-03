@@ -347,7 +347,7 @@ L'extraction des itemsets où figurent l'item \emph{m} est décrit dans la figur
 \begin{figure}
 	\begin{adjustwidth}{-1cm}{}
 	\begin{tabular}{l}
-	\includegraphics[width=15cm,height=7cm]{./img/mining_m.jpg}\\
+	\includegraphics[width=15cm,height=7cm]{./img/mining_m}\\
 	\end{tabular}
 	\caption{\label{fig:text}Extraction des itemsets contenant \emph{m}}
 	\end{adjustwidth}
@@ -355,15 +355,15 @@ L'extraction des itemsets où figurent l'item \emph{m} est décrit dans la figur
 
 La génération des itemsets fréquents via la base conditionnelle d'un sous-motifs se fait grâce à la propriété suivante : \\
 
-\emph{Soit $\alpha$ un itemset fréquent dans $\mathcal{T}$, soient $\mathcal{T}_{\alpha}$ la base conditionnelle de motifs d'$\alpha$ et $\beta$ un itemset $\in \mathcal{T}_{\alpha}$ Alors $\alpha \cup \beta$ est fréquent dans $\mathcal{T}$ si et seulement si $\beta$ est fréquent dans $\mathcal{T}_{\alpha}$}. \\
+
 
 Différentes optimisations sont proposées pour accélérer le processus d'extraction. La principale et plus intéressante est liée à la topologie du FP-Tree. En effet, si celui-ci contient un seul chemin, alors l'ensemble des itemsets fréquents peut être obtenu en énumérant l'ensemble des combinaisons d'items le long de ce chemin avec pour support celui de l'item y appartenant ayant le plus faible. Sur notre exemple, nous aurions par exemple pu énumérer l'ensemble des combinaisons du FP-Tree$|_{m}$ pour en extraire l'intégralité des itemsets le contenant. Cette propriété a été étendue pour exploiter les arbres contenant un préfixe unique en considérant ce préfixe comme un chemin unique ( énumération des combinaisons) et la partie multiple comme un autre FP-Tree en ajoutant une racine au niveau de l'embranchement. Ainsi, l'extraction complète se fait par l'union des itemsets produit par l'énumération avec ceux produits par le processus récursif et enfin avec les itemsets obtenus par combinaisons d'éléments appartenant à l'un et l'autre des ensembles. \\
 
 Bien qu'étant les trois références en matière de méthodes exactes pour l'extraction des itemsets fréquents, ces algorithmes ont malheureusement de nombreuses difficultés à être comparés. En effet, différentes optimisations et implémentations ayant été proposées, de nombreux articles de la littérature présentent des conclusions différentes sur l'efficacité des méthodes. Nous pouvons toutefois considérer que chaque algorithme possède des performances variables principalement selon les caractéristiques du jeu de données étudié et de la qualité de l'implémentation qui en est faite. Nous allons maintenant présenter rapidement quelques algorithmes pour la recherche des itemsets clos avant d'introduire les méta-heuristiques utilisées pour résoudre ce problème.
 
-\subsection{Algorithmes pour itemsets clos/maximaux}
+\subsection{Algorithmes pour itemsets clos}
 
-De la même manière que trois algorithmes pour les itemsets fréquents ont été présentés, trois pour l'extraction des itemsets clos le seront également. Toutefois, nous serons plus succint et renverrons le lecteur au article correspondant quand nécessaire. Ainsi, nous présenterons rapidement les algorithmes A-Close (\cite{PAS99}) et Charm (\cite{ZAK99})puis un peu plus longuement l'algorithme Closet, utilisant également un FP-Tree pour fonctionner (\cite{PEI00}). \\
+De la même manière que trois algorithmes pour les itemsets fréquents ont été présentés, trois pour l'extraction des itemsets clos le seront également. Toutefois, nous serons plus succint et renverrons le lecteur au article correspondant quand nécessaire. Ainsi, nous présenterons rapidement les algorithmes A-Close (\cite{PAS99}), Charm (\cite{ZAK99})et Closet, utilisant également un FP-Tree pour fonctionner (\cite{PEI00}). \\
 
 \subsubsection{A-Close}
 \hspace{0.15cm}Proposé par Pasquier et al. en 1999 dans \cite{PAS99}, l'algorithme A-Close est l'adaptation d'A Priori  pour l'extraction des itemsets clos. Il est composé de deux phases. La première effectue une recherche bottom-up dans le but d'identifier l'ensemble des \emph{générateurs}, i.e. les plus petits itemsets qui déterminent un itemset clos via l'opérateur de clôture défini sur la correspondance de Galois entre itemsets et transactions. Le calcul des \emph{générateurs} se fait via une légère modification d'A Priori. En effet, à chaque fois qu'un ensemble de candidats est généré, A-Close calcule leur support et élimine l'ensemble des non-fréquents. Pour chaque itemset candidat restant, leur support est comparé à celui de ses sous-ensembles calculé au niveau précédent. Si le support d'un candidat égale celui d'un de ses sous-ensembles, cet itemset ne peut pas être un \emph{générateur} et est donc supprimé. Cette phase continue jusqu'à ce qu'aucun \emph{générateur} ne soit produit. \\
@@ -371,12 +371,22 @@ De la même manière que trois algorithmes pour les itemsets fréquents ont ét�
 \hspace{0.15cm} La seconde phase de l'algorithme A-Close consiste, une fois l'ensemble des \emph{générateurs} obtenus, à calculer la clôture de chacun d'entre eux et à éliminer les redondances. Le calcul de la clôture d'un itemset se fait par l'intersection de l'ensemble des transactions dans lesquelles cet itemset apparaît. Ce calcul peut se faire via un seul scan du jeu de données sous réserve que l'intégralité des \emph{générateurs} tient en mémoire centrale.
 
 \subsubsection{Charm}
-\hspace{0.15cm} De la même manière qu'A-Close, Charm définit une correspondance de Galois entre les ordres partiels induits par les itemsets et les transactions. Toutefois, 
+\hspace{0.15cm} De la même manière qu'A-Close, Charm définit une correspondance de Galois entre les ordres partiels induits par les itemsets et les transactions. Toutefois, Charm explore simultanément l'espace des itemsets et celui des tidsets en effectuant des opérations d'union sur les premiers et d'intersection sur les seconds. L'algorithme construit l'arbre des itemsets clos fréquents via les quatre propriétés suivantes tout en élaguant dès que possible les itemsets non fréquents et non clos. \\
 
-\cite{BOR03} 
-\cite{PEI01} 
+\textbf{Propriété 1} \\
+Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) alors \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$} $\cup$ \emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}). Dans ce cas, nous pouvons remplacer toutes les occurences de \emph{$I_{1}$} par \emph{$I_{1}$}$\cup$\emph{$I_{2}$} et retirer \emph{$I_{2}$} des considérations futures.\\
 
+\textbf{Propriété 2} \\
+Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\subset$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) alors \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}  $\cup$ \emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}). Dans ce cas, nous pouvons remplacer toutes les occurentes de \emph{$I_{1}$} par \emph{$I_{1}$}$\cup$\emph{$I_{2}$} mais devons conserver \emph{$I_{2}$} dans les considérations futures puisque \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}). \\
 
+\textbf{Propriété 3} \\
+Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\supset$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) alors \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}  $\cup$ \emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}). De la même manière que dans la propriété précédente, nous pouvons remplacer toutes les occurences de \emph{$I_{2}$} par \emph{$I_{1}$}$\cup$\emph{$I_{2}$} et conserver \emph{$I_{1}$} dans les futures considérations. \\
+
+\textbf{Propriété 4} \\
+Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) alors \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}  $\cup$ \emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}). Dans ce cas, on ne peut rien éliminer car \emph{$I_{1}$} et \emph{$I_{2}$} ont des fermetures différentes. On peut en revanche ajouter le noeud \emph{$I_{1}$}$\cup$\emph{$I_{2}$} et son tidset associé \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}).
+
+\subsubsection{Closet}
+	L'algorithme Closet (\cite{PEI00}) est l'adaptation par ses auteurs de l'algorithme FP-Growth pour l'extraction des itemsets clos fréquents. En effet, il utilise différentes optimisations pour extraire rapidement des itemsets clos et ainsi réduire d'une part le nombre d'appels récursifs de FP-Growth et d'autre part de réduire l'espace mémoire total nécessaire.
   \addcontentsline{toc}{chapter}{Bibliographie}
   \bibliography{biblio}
   \bibliographystyle{unsrt}
