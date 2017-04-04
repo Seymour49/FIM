@@ -410,9 +410,9 @@ Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathca
 \subsection{Définition du problème}
 	La base de transactions sur laquelle s'effectue la recherche des itemsets fréquents peut également être représentée par un graphe biparti. Un graphe est dit biparti s'il existe une partition de son ensemble de sommets en deux sous-ensembles \emph{U} et \emph{V} telle que chaque arête ait une extrémité dans \emph{U} et l'autre dans \emph{V}. Ce type de graphe permet notamment de représenter une relation binaire, ce qui est le cas de notre problème puisque la base de transactions est une relation binaire entre un ensemble d'items et un ensemble d'identifiants de transactions. \\
 	
-	Ainsi, soit le graphe biparti G = (U,V,E) tel que U = \{ $\emph{t}_{j}$ | $\emph{t}_{j} \in \mathcal{T}$ \}, V = \{ \emph{i} | \emph{i} $\in \mathcal{I}$ \} et E = \{ (u,v) | u $\in$ U, v $\in$ V et $\mathcal{T}_{u,v}$ = 1. Le problème d'extraction pouvant être ramené au calcul des itemsets fréquents clos maximaux (\cite{ZAK00}), nous pouvons le redéfinir selon cette représentation comme le calcul de l'ensemble des bicliques maximales. Une biclique est un graphe biparti complet, i.e. $\forall$ u $\in$ U et v $\in$ V, (u,v) $\in$ E. Une biclique G' = (U', V') obtenue depuis G est maximale si et seulement si $\not\exists$ U'' ou V'' | U' $\subset$ U'' $\subseteq$ U, V' $\subset$ V'' $\subseteq$ V tel que G''= (U'', V'') est complet.\\
+	Ainsi, soit le graphe biparti G = (U,V,E) tel que U = \{ $\emph{t}_{j}$ | $\emph{t}_{j} \in \mathcal{T}$ \}, V = \{ \emph{i} | \emph{i} $\in \mathcal{I}$ \} et E = \{ (u,v) | u $\in$ U, v $\in$ V et $\mathcal{T}_{u,v}$ = 1. Le problème d'extraction pouvant être ramené au calcul des itemsets fréquents clos maximaux (\cite{ZAK00}), nous pouvons le redéfinir selon cette représentation comme le calcul de l'ensemble des bicliques maximales. Une biclique est un graphe biparti complet, i.e. $\forall$ u $\in$ U et v $\in$ V, (u,v) $\in$ E. Une biclique G' = (U', V') obtenue depuis G est maximale si et seulement si $\not\exists$ U'' ou V'' | U' $\subset$ U'' $\subseteq$ U, V' $\subset$ V'' $\subseteq$ V tel que G''= (U'', V'') est complet. La figure 3.5 illustre notre base sous la représentation d'un graphe biparti ( format matriciel et graphique).\\
 	
-	Une procédure simple pour vérifier si un graphe biparti est complet consiste à calculer sa densité. En effet, un graphe biparti de densité 1 est complet. La densité d'un tel graphe G = (U, V, E) est défini par le ratio $\frac{2*|E|}{|U|*|V|}$. Le problème de la clique maximum d'un graphe consistant à trouver la clique de cardinalité maximale a été prouvé NP-difficile, confirmant la complexité de notre problème. La figure 3.5 illustre notre base sous la représentation d'un graphe biparti ( format matriciel et graphique). \\
+	Une procédure simple pour vérifier si un graphe biparti est complet consiste à calculer sa densité. En effet, un graphe biparti de densité 1 est complet. La densité d'un tel graphe G = (U, V, E) est défini par le ratio $\frac{|E|}{|U|*|V|}$. \\
 	
 \begin{figure}
 	\begin{adjustwidth}{-1cm}{}
@@ -423,6 +423,7 @@ Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathca
 	\end{adjustwidth}
 \end{figure}
 
+Le problème d'extraction de l'ensemble des motifs fréquents revient donc à calculer l'ensemble des bicliques $\mathcal{K}_{\delta, \omega}$ depuis G telles que $\delta \geq$ \emph{minsup}.
 
 
 \addcontentsline{toc}{chapter}{Bibliographie}
