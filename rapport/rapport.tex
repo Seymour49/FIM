@@ -355,7 +355,7 @@ L'extraction des itemsets où figurent l'item \emph{m} est décrit dans la figur
 
 La génération des itemsets fréquents via la base conditionnelle d'un sous-motifs se fait grâce à la propriété suivante : \\
 
-
+\emph{Soit $\alpha$ un itemset fréquent dans $\mathcal{T}$, soient $\mathcal{T}_{\alpha}$ la base conditionnelle de motifs d'$\alpha$ et $\beta$ un itemset $\in \mathcal{T}_{\alpha}$ Alors $\alpha \cup \beta$ est fréquent dans $\mathcal{T}$ si et seulement si $\beta$ est fréquent dans $\mathcal{T}_{\alpha}$}. \\
 
 Différentes optimisations sont proposées pour accélérer le processus d'extraction. La principale et plus intéressante est liée à la topologie du FP-Tree. En effet, si celui-ci contient un seul chemin, alors l'ensemble des itemsets fréquents peut être obtenu en énumérant l'ensemble des combinaisons d'items le long de ce chemin avec pour support celui de l'item y appartenant ayant le plus faible. Sur notre exemple, nous aurions par exemple pu énumérer l'ensemble des combinaisons du FP-Tree$|_{m}$ pour en extraire l'intégralité des itemsets le contenant. Cette propriété a été étendue pour exploiter les arbres contenant un préfixe unique en considérant ce préfixe comme un chemin unique ( énumération des combinaisons) et la partie multiple comme un autre FP-Tree en ajoutant une racine au niveau de l'embranchement. Ainsi, l'extraction complète se fait par l'union des itemsets produit par l'énumération avec ceux produits par le processus récursif et enfin avec les itemsets obtenus par combinaisons d'éléments appartenant à l'un et l'autre des ensembles. \\
 
@@ -386,9 +386,47 @@ Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\supset$ \textbf{cover$_{\mat
 Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) alors \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}  $\cup$ \emph{$I_{2}$}) = \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}) $\neq$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}). Dans ce cas, on ne peut rien éliminer car \emph{$I_{1}$} et \emph{$I_{2}$} ont des fermetures différentes. On peut en revanche ajouter le noeud \emph{$I_{1}$}$\cup$\emph{$I_{2}$} et son tidset associé \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$})  $\cap$ \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{2}$}).
 
 \subsubsection{Closet}
-	L'algorithme Closet (\cite{PEI00}) est l'adaptation par ses auteurs de l'algorithme FP-Growth pour l'extraction des itemsets clos fréquents. En effet, il utilise différentes optimisations pour extraire rapidement des itemsets clos et ainsi réduire d'une part le nombre d'appels récursifs de FP-Growth et d'autre part de réduire l'espace mémoire total nécessaire.
-  \addcontentsline{toc}{chapter}{Bibliographie}
-  \bibliography{biblio}
-  \bibliographystyle{unsrt}
+\hspace{0.15cm}L'algorithme Closet (\cite{PEI00}) est l'adaptation par ses auteurs de l'algorithme FP-Growth pour l'extraction des itemsets clos fréquents. En effet, il utilise différentes optimisations pour extraire rapidement des itemsets clos et ainsi réduire d'une part le nombre d'appels récursifs de FP-Growth et d'autre part de réduire l'espace mémoire total nécessaire. \\
+
+\hspace{0.15cm}La première propriété utilisée prend effet avant la construction d'un FP-Tree sur une base conditionnelle. En effet, s'il existe un ensemble d'items \emph{Y} apparaissant dans chaque transaction de la base conditionnelle de l'itemset \emph{X}, alors \emph{X} $\cup$ \emph{Y} forme un itemset fréquent clos s'il n'est pas un sous-ensemble d'un itemset fréquent clos déjà trouvés. \\
+
+\hspace{0.15cm}La seconde propriété permet d'extraire des itemsets fréquents clos directement depuis le FP-Tree en réutilisant le principe de chemin unique dans le FP-Tree.  Soit \emph{i} un item fréquent dans la base conditionnelle de l'itemset \emph{X}. Si \emph{i} ne possède qu'un noeud \emph{N} dans le FP-Tree$|$\emph{X} et chaque ancêtre de \emph{N} n'a qu'un enfant et que \emph{N} n'en a pas, plusieurs, ou un seul avec un support inférieur, alors le \emph{i-single segment itemset} est l'union de l'itemset \emph{X} et des items incluant \emph{N} et l'ensemble de ces successeurs. Le \emph{i-single segment itemset Y} est un itemset fréquent clos si le support de \emph{i} dans la base conditionnelle de \emph{X} passe le support minimal et que \emph{Y} n'est pas un sous-ensemble strict d'aucun des itemsets fréquents clos déjà trouvés. Cette propriété est explicitée dans la figure 3.4.\\
+
+\hspace{0.15cm}Enfin, Closet utilise une stratégie pour élaguer l'espace de recherche via la dernière propriété. Soient \emph{X} et \emph{Y} deux itemsets avec le même support. Si \emph{X} $\subset$ \emph{Y} et que \emph{Y} est clos, alors il n'existe aucun itemset fréquent clos contenant \emph{X} mais pas \emph{Y}$\setminus$\emph{X}.
+
+\begin{figure}
+	\begin{adjustwidth}{-1cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=15cm,height=8cm]{./img/closet_p2}\\
+	\end{tabular}
+	\caption{\label{fig:text}Extraction des itemsets fréquents clos depuis un FP-Tree}
+	\end{adjustwidth}
+\end{figure}	
+
+\newpage
+\section{Théorie des graphes}
+	Le problème que nous étudions a également été défini comme un problème de calcul de cliques maximales dans un graphe biparti. \\
+	
+\subsection{Définition du problème}
+	La base de transactions sur laquelle s'effectue la recherche des itemsets fréquents peut également être représentée par un graphe biparti. Un graphe est dit biparti s'il existe une partition de son ensemble de sommets en deux sous-ensembles \emph{U} et \emph{V} telle que chaque arête ait une extrémité dans \emph{U} et l'autre dans \emph{V}. Ce type de graphe permet notamment de représenter une relation binaire, ce qui est le cas de notre problème puisque la base de transactions est une relation binaire entre un ensemble d'items et un ensemble d'identifiants de transactions. \\
+	
+	Ainsi, soit le graphe biparti G = (U,V,E) tel que U = \{ $\emph{t}_{j}$ | $\emph{t}_{j} \in \mathcal{T}$ \}, V = \{ \emph{i} | \emph{i} $\in \mathcal{I}$ \} et E = \{ (u,v) | u $\in$ U, v $\in$ V et $\mathcal{T}_{u,v}$ = 1. Le problème d'extraction pouvant être ramené au calcul des itemsets fréquents clos maximaux (\cite{ZAK00}), nous pouvons le redéfinir selon cette représentation comme le calcul de l'ensemble des bicliques maximales. Une biclique est un graphe biparti complet, i.e. $\forall$ u $\in$ U et v $\in$ V, (u,v) $\in$ E. Une biclique G' = (U', V') obtenue depuis G est maximale si et seulement si $\not\exists$ U'' ou V'' | U' $\subset$ U'' $\subseteq$ U, V' $\subset$ V'' $\subseteq$ V tel que G''= (U'', V'') est complet.\\
+	
+	Une procédure simple pour vérifier si un graphe biparti est complet consiste à calculer sa densité. En effet, un graphe biparti de densité 1 est complet. La densité d'un tel graphe G = (U, V, E) est défini par le ratio $\frac{2*|E|}{|U|*|V|}$. Le problème de la clique maximum d'un graphe consistant à trouver la clique de cardinalité maximale a été prouvé NP-difficile, confirmant la complexité de notre problème. La figure 3.5 illustre notre base sous la représentation d'un graphe biparti ( format matriciel et graphique). \\
+	
+\begin{figure}
+	\begin{adjustwidth}{-1cm}{}
+	\begin{tabular}{l}
+	\includegraphics[width=15cm,height=8cm]{./img/graphe_biparti}\\
+	\end{tabular}
+	\caption{\label{fig:text}$\mathcal{T}$ représenté en graphe biparti}
+	\end{adjustwidth}
+\end{figure}
+
+
+
+\addcontentsline{toc}{chapter}{Bibliographie}
+\bibliography{biblio}
+\bibliographystyle{unsrt}
 
 \end{document}
