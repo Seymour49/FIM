@@ -423,8 +423,56 @@ Si \textbf{cover$_{\mathcal{T}}$}(\emph{$I_{1}$}) $\neq$ \textbf{cover$_{\mathca
 	\end{adjustwidth}
 \end{figure}
 
-Le problème d'extraction de l'ensemble des motifs fréquents revient donc à calculer l'ensemble des bicliques $\mathcal{K}_{\delta, \omega}$ depuis G telles que $\delta \geq$ \emph{minsup}.
+Le problème d'extraction de l'ensemble des motifs fréquents revient donc à calculer l'ensemble des bicliques $\mathcal{K}_{\delta, \omega}$ depuis G telles que $\delta \geq$ \emph{minsup}. \\
 
+
+\subsubsection{Procédures}
+
+	La procédure 1 décrit la construction du graphe biparti induit sur G par un itemset X passé en paramètre. La seconde permet de calculer le support de l'itemset décrit par le graphe induit calculé par la première procédure.
+\begin{algorithm}[H]
+\caption{Induced Graph of X}
+\SetKwInOut{Input}{Input}
+
+\SetKwInOut{Output}{Output}
+\Input{ TDB $\mathcal{T}$, itemset \emph{X} }
+\Output{ G'= (U', V', E') graphe induit par \emph{X} sur $\mathcal{T}$ }
+\Begin{
+	
+	\ForAll{ x $\in$ \emph{X}}{
+		V' = V' $\cup$ \{x\} \\
+		\ForAll{ t $\in \mathcal{T}$}{
+			\If{$\mathcal{T}[t][x]$ == 1}{
+				U' = U' $\cap$ {t} \\
+				E' = E' $\cup$ \{ (t,x) \} \\
+			}
+		}
+	}
+	\textbf{Return} \{ U', V', E' \} \\
+}
+
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+\caption{Support Counting}
+\SetKwInOut{Input}{Input}
+
+\SetKwInOut{Output}{Output}
+\Input{  G'= (U', V', E') graphe induit par \emph{X} sur $\mathcal{T}$  }
+\Output{ Support de \emph{X} }
+\Begin{
+	supp = 0 \\
+	\ForAll{ v $\in$ V'}{
+		
+		\If{$D_{v}$ == |U'|}{
+			supp += 1 \\	
+		}
+		
+	}
+	\textbf{Return} supp \\
+}
+
+\end{algorithm}
 
 \addcontentsline{toc}{chapter}{Bibliographie}
 \bibliography{biblio}
