@@ -203,6 +203,51 @@ X est un itemset solution si et seulement si les propriétés suivantes sont vé
 |\textbf{$sup_{-}$}(X)| < \emph{maxsup}\\
 \end{center}
 
+Nous sommes donc confronté à un problème de classification visant à trouver l'itemset permettant la meilleure discrimination entre les classes positives et négatives. 
 
+\subsection{Représentation et évaluation d'une solution}
+
+	Le problème étant de trouver un itemset maximisant la couverture de la classe positive tout en minimisant son support dans la classe négative, une solution du problème est simplement un bitset \emph{S} de $\mathcal{N}$ bits tel que $\forall \emph{i} \in [1..\mathcal{N}] \emph{S}_{i} = 1$ si l'item \emph{i} appartient à la solution, $\emph{S}_{i}$ = 0 sinon. \\
+	L'évaluation d'une solution doit permettre de quantifier la corrélation des différents items dans leur pouvoir de classification de la base de transactions. Diverses mesures existent et ont été proposées et largement étudiées dans la littérature (citation TAN02, GEN06, ...).\\
+	Nous proposons dans un premier temps d'utiliser la \emph{F-Mesure}, correspondant à la moyenne harmonique entre précision et rappel. Ces deux mesures sont calculées à partir des résultats de la classification de $\mathcal{T}$ par une solution \emph{S}. Chaque transaction \emph{t} appartient à un des quatre ensembles suivants : 
+\begin{center}
+	- Vrai positif (TP) : $\forall \emph{i} \in [1..\mathcal{N}]$  $\emph{S}_{i} = 1 et \emph{t}_{i} = 1$ \&  $\emph{t} \in C^{+}$ \\
+	- Faux Positif (FP) : $\exists \emph{i} \in [1..\mathcal{N}]$ tel que $\emph{S}_{i} = 1, \emph{t}_{i} = 0$ \&  $\emph{t} \in C^{+}$\\
+	- Vrai Négatif (TN) : $\exists \emph{i} \in [1..\mathcal{N}]$ tel que $\emph{S}_{i} = 1, \emph{t}_{i} = 0$ \&  $\emph{t} \in C^{-}$\\
+	- Faux Négatif (FN) : $\forall \emph{i} \in [1..\mathcal{N}]$ $\emph{S}_{i} = 1, \emph{t}_{i} = 1$ \&  $\emph{t} \in C^{-}$\\
+\end{center}
+
+ Le tableau suivant récapitule l'appartenance d'une transaction \emph{t} à un des quatre ensembles : 
+	 
+\begin{center}
+	\begin{tabular}{|c|c|c|}
+		\hline
+		& $\emph{S} \subseteq \emph{t}$ & $\emph{S} \not\subseteq \emph{t}$ \\
+		\hline
+		Classe \emph{t} = 1 & $\emph{t} \in TP$ & $\emph{t} \in FP$ \\
+		\hline
+		Classe \emph{t} = 0 & $\emph{t} \in FN$ & $\emph{t} \in TN$ \\
+		\hline
+\end{tabular}
+\end{center}
+
+La précision d'une telle classification correspond au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses données (TP+FP). Le rappel correspond quant à lui au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses pertinantes existant (TP+FN). 
+
+\begin{center}
+- Precision = $\frac{TP}{TP+FP}$ \\
+\vspace{0.15cm}
+- Rappel = $\frac{TP}{TP+FN}$\\
+\end{center}
+
+La \emph{F Mesure} permet d'aggréger rappel et précision en accordant un poids équivalent à chaque mesure. Cette une version simplifié de la \emph{$F_{\beta}$ Mesure} définie par la relation suivante : 
+\begin{center}
+- \emph{$F_{\beta}$} = (1+$\beta^{2}$) * $\frac{Precision*Rappel}{\beta^{2}*Precision + Rappel}$
+\end{center}
+
+Dans notre cas, où rappel et précision sont équitablement pondérés, la mesure peut se simplifier comme suit :
+La \emph{F Mesure} permet d'aggréger rappel et précision en accordant un poids équivalent à chaque mesure. Cette une version simplifié de la \emph{$F_{\beta}$ Mesure} définie par la relation suivante : 
+\begin{center}
+- \emph{$F_{1}$} = $\frac{2*TP}{2*TP + FN + FP }$
+\end{center}
 
 \end{document}
