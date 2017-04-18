@@ -10,6 +10,7 @@
 \usepackage[final]{pdfpages} 
 \usepackage{changepage}
 \usepackage{graphicx}
+ \usepackage{xcolor}
 
 \usepackage{array}
 
@@ -245,9 +246,38 @@ La \emph{F Mesure} permet d'aggréger rappel et précision en accordant un poids
 \end{center}
 
 Dans notre cas, où rappel et précision sont équitablement pondérés, la mesure peut se simplifier comme suit :
-La \emph{F Mesure} permet d'aggréger rappel et précision en accordant un poids équivalent à chaque mesure. Cette une version simplifié de la \emph{$F_{\beta}$ Mesure} définie par la relation suivante : 
+
 \begin{center}
 - \emph{$F_{1}$} = $\frac{2*TP}{2*TP + FN + FP }$
+\end{center}
+
+Toutefois, cette mesure ne permet pas d'introduire les deux seuils définissant les contraintes de notre problème. Nous proposons donc d'évaluer une solution \emph{X} de \emph{k} items via la formule suivante :
+
+\begin{center}
+	Eval(\emph{X}) = $\emph{k}* ( \frac{1}{2}*\frac{TP}{\emph{minsup}} + \frac{1}{2}*\frac{maxsup}{FN}$ )\\
+\end{center}
+\begin{center}
+	\begin{tabular}{|c|c|c|c|c|c|c|}
+		\hline
+		\emph{tid} & A & B & C & D & E & Classe \\
+		\hline
+		1 & 1 & 0 & 1 & 1 & 0 & \textcolor{green}{+}\\
+		\hline
+		2 & 0 & 1 & 1 & 0 & 1 & \textcolor{green}{+}\\
+		\hline
+		3 & 1 & 0 & 1 & 1 & 0 & \textcolor{green}{+}\\
+		\hline
+		4 & 1 & 0 & 1 & 1 & 1 & \textcolor{green}{+}\\
+		\hline
+		5 & 0 & 1 & 0 & 0 & 1 & \textcolor{red}{-}\\
+		\hline
+		6 & 1 & 0 & 1 & 1 & 0 & \textcolor{red}{-}\\
+		\hline
+		7 & 0 & 1 & 1 & 0 & 1 & \textcolor{red}{-}\\	
+		\hline
+		8 & 1 & 0 & 0 & 1 & 1 & \textcolor{red}{-}\\	
+		\hline		
+	\end{tabular}
 \end{center}
 
 \end{document}
