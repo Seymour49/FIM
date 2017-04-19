@@ -209,7 +209,7 @@ X est un itemset solution si et seulement si les propriétés suivantes sont vé
 
 	Le problème étant de trouver un itemset maximisant la couverture de la classe positive tout en minimisant son support dans la classe négative, une solution du problème est simplement un bitset \emph{S} de $\mathcal{N}$ bits tel que $\forall \emph{i} \in [1..\mathcal{N}] \emph{S}_{i} = 1$ si l'item \emph{i} appartient à la solution, $\emph{S}_{i}$ = 0 sinon. \\
 	L'évaluation d'une solution doit permettre de quantifier la corrélation des différents items dans leur pouvoir de classification de la base de transactions. Diverses mesures existent et ont été proposées et largement étudiées dans la littérature (citation TAN02, GEN06, ...).\\
-	Dans une problématique de classification, de nombreuses mesures sont basées sur les 4 ensembles de transactions suivants :
+	Dans une problématique de classification, de nombreuses mesures sont basées sur les 4 ensembles décrivant la matrice de confusion des performances d'un classifieur :
 \begin{center}
 	- Vrai positif (TP) : $\forall \emph{i} \in [1..\mathcal{N}]$  $\emph{S}_{i} = 1 et \emph{t}_{i} = 1$ \&  $\emph{t} \in C^{+}$ \\
 	- Faux Positif (FP) : $\exists \emph{i} \in [1..\mathcal{N}]$ tel que $\emph{S}_{i} = 1, \emph{t}_{i} = 0$ \&  $\emph{t} \in C^{+}$\\
@@ -228,7 +228,7 @@ X est un itemset solution si et seulement si les propriétés suivantes sont vé
 		\hline
 		Classe \emph{t} = 0 & $\emph{t} \in FN$ & $\emph{t} \in TN$ \\
 		\hline
-\end{tabular}
+	\end{tabular}
 \end{center}
 
 La précision d'une telle classification correspond au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses données (TP+FP). Le rappel correspond quant à lui au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses pertinantes existant (TP+FN). 
@@ -258,13 +258,17 @@ Toutefois, cette mesure ne permet pas d'introduire les deux seuils définissant 
 	$FN(X) \leq \emph{maxsup}$
 \end{center}
 
-Nous proposons donc d'évaluer une solution \emph{X} de \emph{k} items via la formule suivante :
+Enfin, comme le rappellent C. Dhaenens et L. Jourdan dans \emph{Metaheuristics for Big Data}, le choix dans la mesure de qualité est fortement corrélée au contexte d'application et peut donc être utilisée comme fonction objectif par une méthode d'optimisation. Dans ce sens et traitant le problème d'un point de vue générique, nous proposons donc d'évaluer une solution \emph{X} de \emph{k} items de manière générique en aggrégeant simplement notre objectif avec nos deux contraintes équitablement pondérées via la formule suivante :
 
 \begin{center}
-	Eval(\emph{X}) = $\emph{k}* ( \frac{1}{2}*\frac{TP}{\emph{minsup}} + \frac{1}{2}*\frac{maxsup}{FN}$ )\\
+	$\mathcal{F}$(\emph{X}) = $\emph{k}* ( \frac{1}{2}*\frac{TP}{\emph{minsup}} + \frac{1}{2}*\frac{maxsup}{FN}$ )\\
 \end{center}
 
-Le calcul de cette évaluation nécessite un scan complet du jeux de données. Nous pouvons en profiter pour calculer des listes d'adjacences pour les ensembles qui nous intéressent, ici TP et FN. Ainsi, chacune des listes recensera pour l'itemset X le nombre d'occurences de chaque item n'appartenant pas à \emph{X} apparaissant dans les transactions des deux ensembles. Par exemple, sur la base de données exemple suivante, avec \emph{minsup} = 2 et \emph{maxsup = 1} \\
+Le calcul de cette évaluation nécessite un scan complet du jeux de données afin de calculer la cardinalité des ensembles TP et FN intervenant dans la fonction $\mathcal{F}$. Nous verrons ensuite que nous pourrons profiter de ce scan pour la définition du voisinage.
+
+\subsection{Relation de voisinage}
+
+Après avoir défini la fonction d'évaluation d'un individu, il est nécessaire pour pouvoir mettre en place ni'mporte quel mécanisme de recherche de définir la relation de voisinage qui va nous permettre de nous déplacer au sein de l'espace de recherche. \\
 \begin{center}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
