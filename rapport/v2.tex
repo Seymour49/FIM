@@ -268,7 +268,17 @@ Le calcul de cette évaluation nécessite un scan complet du jeux de données af
 
 \subsection{Relation de voisinage}
 
-Après avoir défini la fonction d'évaluation d'un individu, il est nécessaire pour pouvoir mettre en place ni'mporte quel mécanisme de recherche de définir la relation de voisinage qui va nous permettre de nous déplacer au sein de l'espace de recherche. \\
+	Après avoir défini la fonction d'évaluation d'un individu, il est nécessaire pour pouvoir mettre en place ni'mporte quel mécanisme de recherche de définir la relation de voisinage qui va nous permettre de nous déplacer au sein de l'espace de recherche. Différents points sont à considérer pour la définition d'un voisinage pertinent. En premier lieu, il est important de noter qu'il est difficile de défnir un voisinage pertinent dans le cadre d'une approche de type générique (sans information du contexte). Ensuite, en raison de la complexité de la méthode d'évaluation (nécessitant un scan complet du jeu de données) il est important de considérer la taille du voisinage comme un facteur important. En effet, un voisinage trop grand engendrera un coût calculatoire trop important et par conséquent une baisse de performance, alors qu'un voisinage trop petit ne permettra pas un déplacement efficace dans l'espace de recherche.\\
+	
+	Pour l'ensemble de ces raisons et pour ne pas bloquer sur une relation de voisinage informée, nous nous contenterons pour l'instant d'utiliser un voisinage simple et relativement restreint. De fait, une solution \emph{S'} appartiendra au voisinage de la solution courante \emph{S} s'il est différent de \emph{S} à un item prêt. Formellement, le voisinage d'une solution est défini comme suit : \\
+
+\begin{center}
+	$\mathcal{N}(\emph{S})$ = \{\emph{S'} tq |\emph{S'}| = |\emph{S}|+1 et $\forall \emph{i} \in \emph{S}, \emph{i} \in \emph{S'} $ \} $\cup$ \{\emph{S'} tq |\emph{S'}| = |S|-1 et $ \forall \emph{i} \in \emph{S'}, \emph{i} \in \emph{S}$\}   \\
+\end{center}	
+
+Ce voisinage est de taille fixe égale à la taille de $\mathcal{I}$. En effet, chaque item a soit la possibilité d'être ajouté ou bien d'être enlevé de la solution courante. Nous pourrons éventuellement contraindre plus spécifiquement ce voisinage en tentant de spécifier les items pouvant être ajouté/supprimé en fonction d'informations extraites lors de l'évaluation de la solution courante.
+
+
 \begin{center}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
