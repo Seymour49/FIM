@@ -276,8 +276,44 @@ Le calcul de cette évaluation nécessite un scan complet du jeux de données af
 	$\mathcal{N}(\emph{S})$ = \{\emph{S'} tq |\emph{S'}| = |\emph{S}|+1 et $\forall \emph{i} \in \emph{S}, \emph{i} \in \emph{S'} $ \} $\cup$ \{\emph{S'} tq |\emph{S'}| = |S|-1 et $ \forall \emph{i} \in \emph{S'}, \emph{i} \in \emph{S}$\}   \\
 \end{center}	
 
-Ce voisinage est de taille fixe égale à la taille de $\mathcal{I}$. En effet, chaque item a soit la possibilité d'être ajouté ou bien d'être enlevé de la solution courante. Nous pourrons éventuellement contraindre plus spécifiquement ce voisinage en tentant de spécifier les items pouvant être ajouté/supprimé en fonction d'informations extraites lors de l'évaluation de la solution courante.
+Ce voisinage est de taille fixe égale à la taille de $\mathcal{I}$. En effet, chaque item a soit la possibilité d'être ajouté ou bien d'être enlevé de la solution courante. Nous pourrons éventuellement contraindre plus spécifiquement ce voisinage en tentant de spécifier les items pouvant être ajoutés/supprimés en fonction d'informations extraites lors de l'évaluation de la solution courante.
 
+\subsection{Recherche locale}
+
+\hspace{1cm}Le premier algorithme que nous avons implémenté est une recherche tabou itérée. Plus précisément, nous commençons par choisir une solution initiale aléatoire puis nous effectuons de manière itérée plusieurs recherches tabous jusqu'à ce qu'un des deux critères d'arrêts soit atteint. Le premier est un temps d'exécution alloué à l'algorithme et le second est un nombre maximale de recherches n'aboutissant pas à une amélioration de la meilleure solution trouvée jusqu'ici. \\
+
+\hspace{1cm}A chaque itération, la solution courante est remplacée par la meilleure solution voisine, i.e. celle qui maximise la fonction d'évaluation. Il est par conséquent possible qu'aucun voisin n'améliore celle-ci, permettant par conséquent de sortir d'un optimum local. La mécanique tabou consiste ici à interdire à un item ayant été ajouté ou supprimé récemment de subir l'opération inverse pendant un nombre fixé d'itérations appelé \emph{tabu tenure}. Un critère d'aspiration est toutefois indispensable dans le cas où un item interdit améliore la meilleure solution globale. L'algorithme est présenté ci-après.
+	
+\begin{algorithm}[H]
+\caption{Tabu Search}
+\SetKwInOut{Input}{Input}
+
+\SetKwInOut{Output}{Output}
+\Input{ TDB $\mathcal{T}$, tabu tenure \emph{tt}, total time \emph{TT}, nombre max sans amélioration $\beta$ }
+\Output{ Solution \emph{$S_{b}$} }
+\Begin{
+	
+	Solution \emph{S} = randomInit(); \\
+	Solution \emph{$S_{b}$} = \emph{S}; \\
+	d = 0; iteration = 0; \\
+	\Repeat{ d == $\beta$ || timeLeft == 0}{
+		Solution \emph{S'} = BestNeighboor(\emph{S}); \\
+		MaJTabuList(\emph{S'}, \emph{S}, $\emph{tt}+iteration$); \\
+		\emph{S} $\longleftarrow$ \emph{S'}; \\
+		
+		\If{ Evaluation(\emph{S'}) $>$ Evaluation($\emph{S}_{b}$) }{
+		
+			\emph{$S_{b}$} = \emph{S}; \\
+			d = 0;
+		}
+		\Else{
+			d = d  + 1; 
+		}
+		iteration = iteration + 1; \\
+	}
+}
+
+\end{algorithm}
 
 \begin{center}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
