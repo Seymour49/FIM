@@ -116,9 +116,47 @@ void Dataset::loadFile(const string& filename)
 }
 
 
+bool Dataset::include(char* bitset, unsigned int i)
+{
+    bool isIn = true;
+    for(unsigned j=1; (j < _nbCols) && (isIn); ++j){
+	if( bitset[j-1] == '1' && _Matrice[i][j] == '0')
+	    isIn = false;
+    }
+    return isIn;
+}
+
+
+
 vector< int > Dataset::confusionMatrix(char* bitset)
 {
-
+    // confusionMatrix avec TP, FP, TN, FN 
+    vector<int> CM;
+    
+    for( int i=0; i < 4; ++i){
+	CM.push_back(0);
+    }
+    
+    for(unsigned i=0; i < _nbRows; ++i){
+	if( include(bitset, i) ){
+	    if(_Matrice[i][0] == '1'){
+		CM[0] = CM[0] + 1;
+	    }
+	    else{
+		CM[3] = CM[3] + 1;
+	    }
+	}
+	else{
+	    if(_Matrice[i][0] == '1' ){
+		CM[1] = CM[1] + 1;	      
+	    }
+	    else{
+		CM[2] = CM[2] + 1;
+	    } 
+	}
+    }
+    
+    return CM;
 }
 
 
