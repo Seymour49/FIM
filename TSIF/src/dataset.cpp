@@ -160,6 +160,37 @@ vector< int > Dataset::confusionMatrix(char* bitset)
 }
 
 
+vector< vector< int > > Dataset::confusionLists(char* bitset)
+{
+    vector<vector<int>> CL;
+    for(unsigned i=0; i < 4; ++i){
+	vector<int>L;
+	CL.push_back(L);
+    }
+    
+    for(unsigned i=0; i < _nbRows; ++i){
+	if( include(bitset, i) ){
+	    if(_Matrice[i][0] == '1'){
+		CL[0].push_back(i);
+	    }
+	    else{
+		CL[3].push_back(i);
+	    }
+	}
+	else{
+	    if(_Matrice[i][0] == '1' ){
+		CL[1].push_back(i);
+	    }
+	    else{
+		CL[2].push_back(i);
+	    } 
+	}
+    }
+    
+    return CL;
+}
+
+
 
 vector< string > explode2(const string& str)
 {

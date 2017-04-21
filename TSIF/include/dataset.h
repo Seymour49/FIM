@@ -30,6 +30,7 @@ public:
     
     
     std::vector<int> confusionMatrix(char* bitset);
+    std::vector<std::vector<int>> confusionLists(char* bitset);
     
     bool include(char *bitset, unsigned int i);
     
