@@ -191,6 +191,19 @@ vector< vector< int > > Dataset::confusionLists(char* bitset)
 }
 
 
+vector< int > Dataset::tidList(char* bitset, vector<int> tid)
+{
+    vector<int> tidR;
+    
+    for( unsigned t = 0; t < tid.size(); ++t){
+	if( include(bitset, tid[t]) ){
+	    tidR.push_back(tid[t]);
+	}
+    }
+    return tidR;
+}
+
+
 
 vector< string > explode2(const string& str)
 {

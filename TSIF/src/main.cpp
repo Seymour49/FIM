@@ -28,15 +28,7 @@ int getK(Solution s){
  * Fonction calculant la f_mesure de la matrice de confusion passée en paramètre
  * tp = cm[0], fp = cm[1], tn = cm[2], fn = cm[3]
  */
-float f1_measure(Solution s, Dataset& data){
-  
-    vector<int>cm = data.confusionMatrix(s.bits);
-    
-    float tp = (float)cm[0];
-    float fp = (float)cm[1];
-    float fn = (float)cm[3];
-    
-    cout << "tp = " << tp << "; fp = " << fp << "; fn = " << fn << endl;
+float f1_measure(float tp, float fp, float fn){
     
     return (2*tp)/(2*tp + fp + fn);  
 }
@@ -80,13 +72,10 @@ void bestNeighboor(Solution s, Dataset& data){
 	    }
 	    tmp.bits[i] = '1';
 	    vector<vector<int>> tmpCL = data.confusionLists(tmp.bits);
-	    vector<int> tpN(sTL[0].size());
-	    vector<int> fpN(sTL[0].size()+sTL[1].size());
-	    vector<int> tnN(sTL[2].size()+sTL[3].size());
-	    vector<int> fnN(sTL[3].size());
 	    
 	    vector<int>::iterator it;
 	    // TP' = TP(S) inter TP(i) 
+	    vector<int> tpN(sTL[0].size());
 	    it = set_intersection(sTL[0].begin(), sTL[0].end(), tmpCL[0].begin(), tmpCL[0].end(), tpN.begin());
 	    tpN.resize(it-tpN.begin());
 	    
@@ -96,10 +85,12 @@ void bestNeighboor(Solution s, Dataset& data){
 	    vmp.resize(it-vmp.begin());
 	    
 	    // FP' = FP union vmp
+	    vector<int> fpN(sTL[1].size() + vmp.size());
 	    it = set_union(sTL[1].begin(), sTL[1].end(), vmp.begin(), vmp.end(), fpN.begin());
 	    fpN.resize(it-fpN.begin());
 	    
 	    // FN' = FN(S) inter FN(i)
+	    vector<int> fnN(sTL[3].size());
 	    it = set_intersection(sTL[3].begin(),sTL[3].end(), tmpCL[3].begin(), tmpCL[3].end(), fnN.begin());
 	    fnN.resize(it-fnN.begin());
 	    
@@ -109,22 +100,68 @@ void bestNeighboor(Solution s, Dataset& data){
 	    vmp.resize(it - vmp.begin());
 	    
 	    // TN' = TN union FN\FN'
+	    vector<int> tnN(sTL[2].size() + vmp.size());
 	    it = set_union(sTL[2].begin(), sTL[2].end(), vmp.begin(), vmp.end(), tnN.begin());
 	    tnN.resize(it - tnN.begin());
 	    
 	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés. debuggage par somme
-	    cout << "Total " << tpN.size()+fpN.size()+tnN.size()+fnN.size() << endl;
+// 	    cout << "TPN : " << tpN.size() << ";FPN : " << fpN.size() << ";TNN : " << tnN.size() << ";FNN : " << fnN.size() << ";Total " << tpN.size()+fpN.size()+tnN.size()+fnN.size() << endl;
 	    
+	    scores.push_back(f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size()));
 	    delete []tmp.bits;
 	}
-	
 	else{
-	  
+	    // L'item courant appartient à S, on doit donc le supprimer de S et tester ce voisin
+	    // On doit donc calculer sur FP(S) les transactions qui contiennent S\i puis les ajouter 
+	    // à TP pour obtenir TP' puis FP' (par différence)
+	    Solution tmp2;
+	    tmp2.nbBits = s.nbBits;
+	    tmp2.bits = new char[tmp2.nbBits];
+	    for( unsigned k=0; k < tmp2.nbBits; ++k){
+		tmp2.bits[k] = s.bits[k];
+	    }
+	    tmp2.bits[i] = '0';
+	    
+	    // la copie avec l'item en moins est prête à être traitée
+	    
+	    // Calcul de TP(tmp2) sur FP(S)n
+	    vector<int> vmp2 = data.tidList(tmp2.bits, sTL[1]);
+	    // TP' = TP U vmp2
+	    vector<int> tpN(sTL[0].size() + vmp2.size());
+	    vector<int>::iterator it;
+	    
+	    it = set_union(sTL[0].begin(), sTL[0].end(), vmp2.begin(), vmp2.end(), tpN.begin());
+	    tpN.resize(it - tpN.begin());
+	    
+	    // FP' = FP \ vmp2
+	    vector<int> fpN(sTL[1].size() - vmp2.size());
+	    it = set_difference(sTL[1].begin(), sTL[1].end(), vmp2.begin(), vmp2.end(), fpN.begin());
+	    fpN.resize(it - fpN.begin());
+	    
+	    // vmp2 = tidlist(tmp2, TN)
+	    vmp2.clear(); vmp2.shrink_to_fit();
+	    vmp2 = data.tidList(tmp2.bits, sTL[2]);
+	    
+	    // FN' = FN U vmp2
+	    vector<int> fnN(sTL[3].size() + vmp2.size());
+	    it = set_union(sTL[3].begin(), sTL[3].end(), vmp2.begin(), vmp2.end(), fnN.begin());
+	    fnN.resize(it - fnN.begin());
+	    
+	    // TN' = TN \ vmp2
+	    vector<int> tnN(sTL[2].size() - vmp2.size());
+	    it = set_difference(sTL[2].begin(), sTL[2].end(), vmp2.begin(), vmp2.end(), tnN.begin());
+	    tnN.resize(it - tnN.begin());
+	    
+	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés. debuggage par somme
+// 	    cout << "TPN : " << tpN.size() << ";FPN : " << fpN.size() << ";TNN : " << tnN.size() << ";FNN : " << fnN.size() << ";Total " << tpN.size()+fpN.size()+tnN.size()+fnN.size() << endl;
+	    scores.push_back(f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size()));
+	    delete [] tmp2.bits;
 	}
     }
     
-   
-  
+    for(unsigned int l=0; l < scores.size(); ++l){
+	cout << "F_measure for item " << l << " : " << scores[l] << endl;
+    }
 }
 
 
@@ -142,10 +179,9 @@ int main(int argc, char** argv){
     s1.nbBits = nbB;
     for(unsigned k=0; k < nbB; ++k) s1.bits[k] = '0';
     s1.bits[0] = '1';
-    s1.bits[25] = '1';
+//     s1.bits[25] = '1';
     s1.score = 0.0;
     
-    cout << "F_1(s1) : " << f1_measure(s1,_data) << endl;
     cout << "F(s1) : " << perso_measure(s1, _data, 100, 40) << endl;
     
     vector<vector<int>> CL = _data.confusionLists(s1.bits);
