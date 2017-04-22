@@ -47,7 +47,7 @@ float perso_measure(Solution s, Dataset& data, unsigned minS, unsigned maxS){
 }
 
 
-void bestNeighboor(Solution s, Dataset& data){
+void tidListNeighboor(Solution s, Dataset& data){
   
     vector<float> scores;
     vector<Solution> voisins;
@@ -165,6 +165,43 @@ void bestNeighboor(Solution s, Dataset& data){
 }
 
 
+void naiveNeighboor(Solution s, Dataset& data){
+    
+    vector<float> scores;
+    
+    Solution tmp;
+    tmp.nbBits = s.nbBits;
+    tmp.bits = new char[tmp.nbBits];
+    
+    for(unsigned i=0; i < tmp.nbBits; ++i){
+	tmp.bits[i] = s.bits[i];
+    }
+    
+    for(unsigned i=0; i < tmp.nbBits; ++i){
+	if(tmp.bits[i] == '0'){
+	    tmp.bits[i] = '1';
+	    vector<int>cm = data.confusionMatrix(tmp.bits);
+	    
+	    scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+	    tmp.bits[i] = '0';
+	}
+	else{
+	    tmp.bits[i] = '0';
+	    vector<int>cm = data.confusionMatrix(tmp.bits);
+	    
+	    scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+	    tmp.bits[i] = '1';
+	}
+    }
+    
+    for(unsigned i=0; i < scores.size(); ++i){
+	cout << "F_measure for item " << i << " : " << scores[i] << endl;
+    }
+    
+    delete [] tmp.bits;
+}
+
+
 int main(int argc, char** argv){
   
     string file = "./data/mushroom.dat";
@@ -203,7 +240,8 @@ int main(int argc, char** argv){
 	}
     }
     
-    bestNeighboor(s1,_data);
+    tidListNeighboor(s1,_data);
+//     naiveNeighboor(s1, _data);
     /*
     it = set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), v3.begin());
     v3.resize(it-v3.begin());
