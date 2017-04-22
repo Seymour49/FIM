@@ -54,7 +54,6 @@ void Dataset::loadFile(const string& filename)
 	    }	  
 	}
 	
-	cout << "toto" << endl;
 	vector<vector<int>> mat;
 	vector<int> row;
 	

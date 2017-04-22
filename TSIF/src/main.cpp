@@ -159,9 +159,13 @@ void tidListNeighboor(Solution s, Dataset& data){
 	}
     }
     
-    for(unsigned int l=0; l < scores.size(); ++l){
-	cout << "F_measure for item " << l << " : " << scores[l] << endl;
+    int maxPos = 0;
+    float maxVal = scores[0];
+    for(unsigned i=1; i < scores.size(); ++i){
+	if(scores[i] > maxVal )
+	  maxPos = i;
     }
+    cout << "Le meilleur voisin revient à fliper l'item " << maxPos << " pour une évaluation à " << maxVal << ". Gain = " << maxVal - s.score << endl; 
 }
 
 
@@ -187,17 +191,25 @@ void naiveNeighboor(Solution s, Dataset& data){
 	}
 	else{
 	    tmp.bits[i] = '0';
-	    vector<int>cm = data.confusionMatrix(tmp.bits);
-	    
-	    scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+	    if(getK(tmp) != 0){
+		vector<int>cm = data.confusionMatrix(tmp.bits);
+		
+		scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+	    }
+	    else{
+		scores.push_back(0.0);
+	    }
 	    tmp.bits[i] = '1';
 	}
     }
     
-    for(unsigned i=0; i < scores.size(); ++i){
-	cout << "F_measure for item " << i << " : " << scores[i] << endl;
+    int maxPos = 0;
+    float maxVal = scores[0];
+    for(unsigned i=1; i < scores.size(); ++i){
+	if(scores[i] > maxVal )
+	  maxPos = i;
     }
-    
+    cout << "Le meilleur voisin revient à fliper l'item " << maxPos << " pour une évaluation à " << maxVal << ". Gain = " << maxVal - s.score << endl; 
     delete [] tmp.bits;
 }
 
@@ -215,43 +227,20 @@ int main(int argc, char** argv){
     s1.bits = new char[nbB];
     s1.nbBits = nbB;
     for(unsigned k=0; k < nbB; ++k) s1.bits[k] = '0';
-    s1.bits[0] = '1';
+//     s1.bits[0] = '0';
+    s1.bits[108] = '1';
 //     s1.bits[25] = '1';
     s1.score = 0.0;
     
     cout << "F(s1) : " << perso_measure(s1, _data, 100, 40) << endl;
+    vector<int> CM = _data.confusionMatrix(s1.bits);
+    s1.score = f1_measure((float)CM[0], (float)CM[1], (float)CM[3]);
     
-    vector<vector<int>> CL = _data.confusionLists(s1.bits);
-    for(unsigned i=0; i < CL.size(); ++i){
-	cout << " " << CL[i].size();
-    }
-    cout << endl;
+  
+//     tidListNeighboor(s1,_data);
+    naiveNeighboor(s1, _data);
     
-    vector<int> v1,v2,v4;
-    vector<int> v3(20);
-    vector<int>::iterator it;
-    for(int w=0; w<10;++w){
-	v1.push_back(w);
-	if(w%2 == 0){
-	    v2.push_back(w);
-	}
-	else{
-	    v4.push_back(w);
-	}
-    }
     
-    tidListNeighboor(s1,_data);
-//     naiveNeighboor(s1, _data);
-    /*
-    it = set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), v3.begin());
-    v3.resize(it-v3.begin());
-    for(unsigned n=0; n < v3.size(); ++n)
-	cout << v3[n] << " ";
-    cout << endl;
-    it = set_difference(v1.begin(), v1.end(), v4.begin(), v4.end(), v3.begin());
-    v3.resize(it-v3.begin());
-    for(unsigned n=0; n < v3.size(); ++n)
-	cout << v3[n] << " ";*/
     delete[] s1.bits;
 
     return 0;
