@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <array>
+#include <ctime>
 
 #include "../include/dataset.h"
 using namespace std;
@@ -28,28 +29,34 @@ int getK(Solution s){
  * Fonction calculant la f_mesure de la matrice de confusion passée en paramètre
  * tp = cm[0], fp = cm[1], tn = cm[2], fn = cm[3]
  */
-float f1_measure(float tp, float fp, float fn){
-    
+float f1_measure(float tp, float fp, float fn){    
     return (2*tp)/(2*tp + fp + fn);  
 }
 
 /**
  * Fonction évaluation proposée
  */
-float perso_measure(Solution s, Dataset& data, unsigned minS, unsigned maxS){  
-    int k = getK(s);
-    
-    vector<int>cm = data.confusionMatrix(s.bits);
-    float tp = (float)cm[0];
-    float fn = (float)cm[3];
-    
+float perso_measure(int k ,float tp, float fn, unsigned minS, unsigned maxS){      
     return k*( (tp/(2*minS))+ (maxS/(2*fn)) );
 }
 
 
-void tidListNeighboor(Solution s, Dataset& data){
+/**
+ * Comparaison de deux voisins selon leur score
+ */
+static bool compareGain(const pair<int,float> a, const pair<int,float> b){
+	return a.second > b.second;
+}
+
+/**
+ * Fonction d'évaluation du voisinage par union et intersection sur les tidlists
+ * des différents ensembles.
+ * Retourne la paire <pos,score> correspondant à l'item à fliper et au score qui lui
+ * est associé.
+ */
+pair<unsigned,float> tidListNeighboor(Solution s, Dataset& data, vector<int> TL, int iter, float best){
   
-    vector<float> scores;
+    vector<pair<unsigned,float>> scores;
     vector<Solution> voisins;
     
     // TP = 0, FP = 1, TN, = 2, FN = 3
@@ -104,10 +111,8 @@ void tidListNeighboor(Solution s, Dataset& data){
 	    it = set_union(sTL[2].begin(), sTL[2].end(), vmp.begin(), vmp.end(), tnN.begin());
 	    tnN.resize(it - tnN.begin());
 	    
-	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés. debuggage par somme
-// 	    cout << "TPN : " << tpN.size() << ";FPN : " << fpN.size() << ";TNN : " << tnN.size() << ";FNN : " << fnN.size() << ";Total " << tpN.size()+fpN.size()+tnN.size()+fnN.size() << endl;
-	    
-	    scores.push_back(f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size()));
+	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés.
+	    scores.push_back(make_pair(i,f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size())));
 	    delete []tmp.bits;
 	}
 	else{
@@ -153,26 +158,45 @@ void tidListNeighboor(Solution s, Dataset& data){
 	    tnN.resize(it - tnN.begin());
 	    
 	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés. debuggage par somme
-// 	    cout << "TPN : " << tpN.size() << ";FPN : " << fpN.size() << ";TNN : " << tnN.size() << ";FNN : " << fnN.size() << ";Total " << tpN.size()+fpN.size()+tnN.size()+fnN.size() << endl;
-	    scores.push_back(f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size()));
+	    scores.push_back(make_pair(i,f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size())));
 	    delete [] tmp2.bits;
 	}
     }
     
-    int maxPos = 0;
-    float maxVal = scores[0];
-    for(unsigned i=1; i < scores.size(); ++i){
-	if(scores[i] > maxVal )
-	  maxPos = i;
+    // Sélection du meilleur voisin non-tabou (avec mécanisme d'aspiration)
+    sort(scores.begin(), scores.end(), compareGain);
+    
+    bool chosen = false;
+    unsigned pos = 0;
+    while ( !chosen && (pos < scores.size()) ){
+      
+	// Mouvement interdit par la liste tabou
+	if( TL[scores[pos].first] > iter ){
+	    
+	    // Mécanisme d'aspiration
+	    if( scores[pos].second > best ){
+		chosen = true;
+	    }
+	    else{
+		++pos;
+	    }
+	}
+	else{
+	    chosen = true;
+	}
     }
-    cout << "Le meilleur voisin revient à fliper l'item " << maxPos << " pour une évaluation à " << maxVal << ". Gain = " << maxVal - s.score << endl; 
+    
+    cout << "Le meilleur voisin revient à fliper l'item " << scores[pos].first << " pour une évaluation à " << scores[pos].second << ". Gain = " << scores[pos].second - s.score << endl; 
+    
+    return scores[pos]; 
 }
 
 
-void naiveNeighboor(Solution s, Dataset& data){
+pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL, int iter, float best){
     
-    vector<float> scores;
+    vector<pair<unsigned,float>> scores;
     
+    // Copie de s dans tmp
     Solution tmp;
     tmp.nbBits = s.nbBits;
     tmp.bits = new char[tmp.nbBits];
@@ -181,12 +205,13 @@ void naiveNeighboor(Solution s, Dataset& data){
 	tmp.bits[i] = s.bits[i];
     }
     
+    // Pour chacun des bits on teste sa valeur et on évalue le voisin correspondant
     for(unsigned i=0; i < tmp.nbBits; ++i){
 	if(tmp.bits[i] == '0'){
 	    tmp.bits[i] = '1';
 	    vector<int>cm = data.confusionMatrix(tmp.bits);
 	    
-	    scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+	    scores.push_back(make_pair(i,f1_measure((float)cm[0], (float)cm[1], (float)cm[3])));
 	    tmp.bits[i] = '0';
 	}
 	else{
@@ -194,54 +219,140 @@ void naiveNeighboor(Solution s, Dataset& data){
 	    if(getK(tmp) != 0){
 		vector<int>cm = data.confusionMatrix(tmp.bits);
 		
-		scores.push_back(f1_measure((float)cm[0], (float)cm[1], (float)cm[3]));
+		scores.push_back(make_pair(i,f1_measure((float)cm[0], (float)cm[1], (float)cm[3])));
 	    }
 	    else{
-		scores.push_back(0.0);
+		scores.push_back(make_pair(i,0.0));
 	    }
 	    tmp.bits[i] = '1';
 	}
     }
     
-    int maxPos = 0;
-    float maxVal = scores[0];
-    for(unsigned i=1; i < scores.size(); ++i){
-	if(scores[i] > maxVal )
-	  maxPos = i;
+    // Sélection du meilleur voisin non-tabou (avec mécanisme d'aspiration)
+    sort(scores.begin(), scores.end(), compareGain);
+    
+    bool chosen = false;
+    unsigned pos = 0;
+    while ( !chosen && (pos < scores.size()) ){
+      
+	// Mouvement interdit par la liste tabou
+	if( TL[scores[pos].first] > iter ){
+	    
+	    // Mécanisme d'aspiration
+	    if( scores[pos].second > best ){
+		cout << "Aspiration sur item " << scores[pos].first << endl;
+		chosen = true;
+	    }
+	    else{
+		++pos;
+	    }
+	}
+	else{
+	    chosen = true;
+	}
     }
-    cout << "Le meilleur voisin revient à fliper l'item " << maxPos << " pour une évaluation à " << maxVal << ". Gain = " << maxVal - s.score << endl; 
+    
+    cout << "Le meilleur voisin revient à fliper l'item " << scores[pos].first << " pour une évaluation à " << scores[pos].second << ". Gain = " << scores[pos].second - s.score << endl; 
+    
     delete [] tmp.bits;
+    
+    return scores[pos];
+}
+
+
+void randomInit(Solution *s, Dataset & data){  
+
+    s->nbBits = data.getnbCols() -1;
+    s->bits = new char[s->nbBits];
+    for(unsigned i = 0; i < s->nbBits; ++i) s->bits[i] = '0';
+    // Assignation aléatoire de 3 bits à 1 TODO à revoir avec encadrants
+    for(unsigned i=0; i < 1;++i){
+	int randomPos = rand() % s->nbBits;
+	s->bits[108] = '1';
+    }
+    
+    vector<int>CMS = data.confusionMatrix(s->bits);
+    s->score = f1_measure((float)CMS[0], (float)CMS[1], (float)CMS[3]);
+}
+
+
+/**
+ * Copie de s1 vers s2
+ */ 
+void properCopy(Solution &s1, Solution* s2){
+
+    s2->nbBits = s1.nbBits;
+    s2->bits = new char[s2->nbBits];
+    for(unsigned i=0; i < s2->nbBits; ++i) s2->bits[i] = s1.bits[i];
+    s2->score = s1.score;
 }
 
 
 int main(int argc, char** argv){
   
+    // Chargement du fichier de données à traiter
     string file = "./data/mushroom.dat";
     Dataset _data;
-    
     _data.loadFile(file);
     
-    Solution s1;
-    unsigned nbB = _data.getnbCols()-1;
+    // Initialisation de l'aléatoire
+    srand(time(NULL));
     
-    s1.bits = new char[nbB];
-    s1.nbBits = nbB;
-    for(unsigned k=0; k < nbB; ++k) s1.bits[k] = '0';
-//     s1.bits[0] = '0';
-    s1.bits[108] = '1';
-//     s1.bits[25] = '1';
-    s1.score = 0.0;
+    // Déclaration et initialisation de la première solution
+    Solution _sCurrent;
+    randomInit(&_sCurrent,_data);
     
-    cout << "F(s1) : " << perso_measure(s1, _data, 100, 40) << endl;
-    vector<int> CM = _data.confusionMatrix(s1.bits);
-    s1.score = f1_measure((float)CM[0], (float)CM[1], (float)CM[3]);
-    
-  
-//     tidListNeighboor(s1,_data);
-    naiveNeighboor(s1, _data);
-    
-    
-    delete[] s1.bits;
+    // Solution SB = meilleure solution, initialiement s
+    Solution _SB;
+    properCopy(_sCurrent, &_SB);
 
+    // Initialisation de la liste tabou
+    vector<int> TabuList(_SB.nbBits, 0);
+    
+    // Paramètres recherche
+    int maxNoUpIt = 30; int maxIt = 1000;
+    int currentIt = 0; int noUpIt = 0;
+    int tt = 10; // tabu tenure
+    
+    while( noUpIt < maxNoUpIt && currentIt < maxIt){
+      
+// 	// Copie de _sCurrent dans N
+// 	Solution N;
+// 	properCopy(_sCurrent, &N);
+// 	
+	// Sélection du meilleur voisin 
+	pair<unsigned, float> bestN;
+	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score);
+	
+	// Mise à jour TabuList
+	TabuList[bestN.first] = currentIt+tt;
+	
+	// Changement de la solution courante et de son score
+	if( _sCurrent.bits[bestN.first] == '0'){
+	    _sCurrent.bits[bestN.first] = '1';
+	}
+	else{
+	    _sCurrent.bits[bestN.first] = '0';
+	}
+	_sCurrent.score = bestN.second;
+	
+	// Comparaison avec la meilleure solution
+	if( _sCurrent.score > _SB.score ){
+	    // Copie de la solution courante vers la meilleure et remise à 0 de noUpIt
+	    for(unsigned m=0; m < _sCurrent.nbBits; ++m)
+		_SB.bits[m] = _sCurrent.bits[m];
+	    _SB.score = _sCurrent.score;
+	    
+	    noUpIt = 0;
+	}
+	else{
+	    ++noUpIt;
+	}
+	++currentIt;
+    }
+    
+    
+    delete[] _sCurrent.bits;
+    delete[] _SB.bits;
     return 0;
 }
