@@ -98,10 +98,10 @@ void Dataset::loadFile(const string& filename)
 	    
 	    // Détermination de la classe de la transaction
 	    if( mat[i][0] == 1){
-		_Matrice[i][0] = '1';
+		_Matrice[i][0] = '0';
 	    }
 	    else{
-		_Matrice[i][0] = '0';
+		_Matrice[i][0] = '1';
 	      
 	    }
 	    

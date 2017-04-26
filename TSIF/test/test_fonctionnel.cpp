@@ -26,7 +26,8 @@ void displaySolution(const Solution &s){
 	    cout << i+3 << " ";
 	}
     }
-    cout << endl << "Score : " << s.score << endl;
+    cout << endl;
+//     cout << endl << "Score : " << s.score << endl;
 }
 
 
@@ -350,10 +351,46 @@ void properCopy(Solution &s1, Solution* s2){
 }
 
 
+void validNeighboor(Solution s, Dataset& data){
+    // Copie de s dans tmp
+    Solution tmp;
+    tmp.nbBits = s.nbBits;
+    tmp.bits = new char[tmp.nbBits];
+    
+    for(unsigned i=0; i < tmp.nbBits; ++i){
+	tmp.bits[i] = s.bits[i];
+    }
+    
+    // Pour chacun des bits on teste sa valeur et on évalue le voisin correspondant
+    for(unsigned i=0; i < tmp.nbBits; ++i){
+	if(tmp.bits[i] == '0'){
+	    tmp.bits[i] = '1';
+	    displaySolution(tmp);
+	    tmp.bits[i] = '0';
+	}
+	else{
+	    tmp.bits[i] = '0';
+	    displaySolution(tmp);
+	    tmp.bits[i] = '1';
+	}
+	
+
+    }
+  
+    delete []tmp.bits;
+}
+
+
 int main(int argc, char** argv){
 
+    /*	Tests réalisés sur bitset 3/5/8 avec classe positive si le premier item est
+     * 	2, classe négative si 1.
+     * 	Fichier debug.dat utilisé, résultats fonctionnels ok
+     *	Changement valeur dans dataset.cpp line 99 
+     */
+    
     // Chargement du fichier de données à traiter
-    string file = "./data/mushroom.dat";
+    string file = "./data/debug.dat";
     Dataset _data;
     _data.loadFile(file);
     
@@ -362,57 +399,33 @@ int main(int argc, char** argv){
     
     // Déclaration et initialisation de la première solution
     Solution _sCurrent;
-    randomInit(&_sCurrent,_data);
+    _sCurrent.nbBits = _data.getnbCols() - 1;
+    _sCurrent.bits = new char[_sCurrent.nbBits];
+    for(unsigned i=0; i < _sCurrent.nbBits; ++i) _sCurrent.bits[i] = '0';
     
-    // Solution SB = meilleure solution, initialiement s
-    Solution _SB;
-    properCopy(_sCurrent, &_SB);
-
-    // Initialisation de la liste tabou
-    vector<int> TabuList(_SB.nbBits, 0);
+    _sCurrent.bits[0] = '1'; _sCurrent.bits[2] = '1'; _sCurrent.bits[5] = '1';
     
-    // Paramètres recherche
-    int maxNoUpIt = 30; int maxIt = 1000;
-    int currentIt = 0; int noUpIt = 0;
-    int tt = 10; // tabu tenure
-    
-    while( noUpIt < maxNoUpIt && currentIt < maxIt){
-      
-	// Sélection du meilleur voisin 
-	pair<unsigned, float> bestN;
-	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score);
-	
-	// Mise à jour TabuList
-	TabuList[bestN.first] = currentIt+tt;
-	
-	// Changement de la solution courante et de son score
-	if( _sCurrent.bits[bestN.first] == '0'){
-	    _sCurrent.bits[bestN.first] = '1';
+    for(unsigned i=0; i < _data.getnbRows(); ++i){
+	if( _data.include(_sCurrent.bits, i) ){
+	    displaySolution(_sCurrent);
+	    cout << "est contenu dans la transaction " << i << endl;
 	}
-	else{
-	    _sCurrent.bits[bestN.first] = '0';
-	}
-	_sCurrent.score = bestN.second;
-	
-	// Comparaison avec la meilleure solution
-	if( _sCurrent.score > _SB.score ){
-	    // Copie de la solution courante vers la meilleure et remise à 0 de noUpIt
-	    for(unsigned m=0; m < _sCurrent.nbBits; ++m)
-		_SB.bits[m] = _sCurrent.bits[m];
-	    _SB.score = _sCurrent.score;
-	    
-	    noUpIt = 0;
-	}
-	else{
-	    ++noUpIt;
-	}
-	++currentIt;
     }
     
-    displaySolution(_SB);
     
-    delete[] _sCurrent.bits;
-    delete[] _SB.bits;
-
+    vector<int> CM = _data.confusionMatrix(_sCurrent.bits);
+    vector<vector<int>> CL = _data.confusionLists(_sCurrent.bits);
+    cout << "TP = " << CM[0] << "; FP = " << CM[1] << "; TN = " << CM[2] << "; FN = " << CM[3] << endl;
+    
+    for(unsigned i=0 ; i < 4; ++i){
+	for(unsigned j=0; j < CL[i].size(); ++j){
+	    cout << " " << CL[i][j];
+	}
+	cout << endl;
+    }
+    
+    validNeighboor(_sCurrent,_data);
+    
+    delete []_sCurrent.bits;
     return 0;
 }
