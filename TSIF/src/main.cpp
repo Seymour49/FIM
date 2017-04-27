@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <ctime>
+#include <getopt.h>
 
 #include "../include/dataset.h"
 using namespace std;
@@ -404,75 +405,102 @@ pair<Solution, double> tabuSearch(Solution & s0, Dataset &_data, double remainin
 
 int main(int argc, char** argv){
 
+    // Initialisation de l'aléatoire
+    srand(time(NULL));
+  
+    /*
+     * Gestion des arguments
+     */
+    string file = "./data/mushroom.dat"; 	// JDD par défaut
+    double AllocTime = 15;			// Temps en seconde
+    unsigned maxNoUpIt = 300;			// Max mouvement voisinage sans amélioration avant arrêt
+    int tabuTenure = 15;			// TabuTenure
+    int maxTS = 10;				// Maximum TS sans amélioration
+    
+    unsigned minS = 5000;			// Valeur du seuil minimal
+    unsigned maxS = 250;			// Valeur du seuil maximal
+    
+    // Flag pour fonction évaluation
+    static int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
+    
+    while(1){
+	int opt;
+	
+	// Déclarations des long_options
+	static struct option long_options[] = {
+	    
+	    /* Flags, i.e pas de version courte */
+	    {"f1_measure", no_argument, &evaluate_flag, 0},
+	    {"perso_measure", no_argument, &evaluate_flag, 1},
+	    
+	    
+	    /* Options avec version courtes */
+	    {"allocTime", required_argument, 0, 't'},
+	    {"dataFile", required_argument, 0, 'd'},
+	    {"tabuTenure", required_argument, 0, 'b'},
+	    {"maxNoUpTS", required_argument, 0, 'n'},
+	    {"maxTS", required_argument, 0, 's'},
+	    {"minS", required_argument, 0, 'l'},
+	    {"maxS", required_argument, 0, 'u'},
+	    {0,0,0,0}
+	};
+	
+	// getopt_long recupere l'option ici
+	int option_index = 0;
+	
+	opt = getopt_long(argc,argv, "t:d:b:n:s:l:u:", long_options, &option_index);
+	
+	// fin des options
+	if(opt == -1)
+	    break;
+	
+	switch(opt){
+	    
+	    //Gestion des flags
+	    case 0:
+		if(long_options[option_index].flag != 0)
+		  break;
+		
+	    case 't':
+		  AllocTime = atof(optarg);
+		  break;
+	    case 'd':
+		  file = string(optarg);
+		  break;
+	    case 'b':
+		  tabuTenure = atoi(optarg);
+		  break;  
+	    case 'n':
+		  maxNoUpIt = atoi(optarg);
+		  break;
+	    case 's':
+		  maxTS = atoi(optarg);
+		  break;  
+	    case 'l':
+		  minS = atoi(optarg);
+		  break;
+	    case 'u':
+		  maxS = atoi(optarg);
+		  break;
+	}
+	
+    }
+    
+    
     // Chargement du fichier de données à traiter
-    string file = "./data/mushroom.dat";
     Dataset _data;
     _data.loadFile(file);
     
-    // Initialisation de l'aléatoire
-    srand(time(NULL));
     
     // Déclaration et initialisation de la première solution
     Solution _sCurrent;
     randomInit(&_sCurrent,_data);
     
-/*
-    // Solution SB = meilleure solution, initialiement s
-    Solution _SB;
-    properCopy(_sCurrent, &_SB);
-
-    // Initialisation de la liste tabou
-    vector<int> TabuList(_SB.nbBits, 0);
     
-    // Paramètres recherche
-    int maxNoUpIt = 30; int maxIt = 1000;
-    int currentIt = 0; int noUpIt = 0;
-    int tt = 10; // tabu tenure
-    
-    while( noUpIt < maxNoUpIt && currentIt < maxIt){
-      
-	// Sélection du meilleur voisin 
-	pair<unsigned, float> bestN;
-	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score);
-	
-	// Mise à jour TabuList
-	TabuList[bestN.first] = currentIt+tt;
-	
-	// Changement de la solution courante et de son score
-	if( _sCurrent.bits[bestN.first] == '0'){
-	    _sCurrent.bits[bestN.first] = '1';
-	}
-	else{
-	    _sCurrent.bits[bestN.first] = '0';
-	}
-	_sCurrent.score = bestN.second;
-	
-	// Comparaison avec la meilleure solution
-	if( _sCurrent.score > _SB.score ){
-	    // Copie de la solution courante vers la meilleure et remise à 0 de noUpIt
-	    for(unsigned m=0; m < _sCurrent.nbBits; ++m)
-		_SB.bits[m] = _sCurrent.bits[m];
-	    _SB.score = _sCurrent.score;
-	    
-	    noUpIt = 0;
-	}
-	else{
-	    ++noUpIt;
-	}
-	++currentIt;
-    }
-    
-    displaySolution(_SB);
-    
-    delete[] _sCurrent.bits;
-    delete[] _SB.bits;
-*/
-
-    
-    pair<Solution, double> rTS = tabuSearch(_sCurrent, _data, 10, 50, 15);
+    pair<Solution, double> rTS = tabuSearch(_sCurrent, _data, AllocTime, maxNoUpIt, tabuTenure);
     
     cout << "Temps restant : " <<rTS.second << endl;
-    cout << "Score rTS : " << rTS.first.score << endl;
+    displaySolution(rTS.first);
     
     delete [] rTS.first.bits;
     delete [] _sCurrent.bits;
