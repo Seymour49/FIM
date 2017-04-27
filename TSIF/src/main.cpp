@@ -350,6 +350,58 @@ void properCopy(Solution &s1, Solution* s2){
 }
 
 
+pair<Solution, double> tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigned maxIt, int tabuTenure){
+ 
+    Solution _sCurrent, _SB;
+    properCopy(s0, &_sCurrent);
+    properCopy(_sCurrent, &_SB);
+    
+    time_t start = time(NULL);
+    unsigned d = 0;
+    int currentIt = 0;
+    
+    // Initialisation de la liste tabou
+    vector<int> TabuList(_SB.nbBits, 0);
+    
+    do{
+	// Sélection du meilleur voisin 
+	pair<unsigned, float> bestN;
+	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score);
+	
+	// Mise à jour TabuList
+	TabuList[bestN.first] = currentIt+tabuTenure;
+	
+	// Changement de la solution courante et de son score
+	if( _sCurrent.bits[bestN.first] == '0'){
+	    _sCurrent.bits[bestN.first] = '1';
+	}
+	else{
+	    _sCurrent.bits[bestN.first] = '0';
+	}
+	_sCurrent.score = bestN.second;
+	
+	// Comparaison avec la meilleure solution
+	if( _sCurrent.score > _SB.score ){
+	    // Copie de la solution courante vers la meilleure et remise à 0 de noUpIt
+	    for(unsigned m=0; m < _sCurrent.nbBits; ++m)
+		_SB.bits[m] = _sCurrent.bits[m];
+	    _SB.score = _sCurrent.score;
+	    
+	    d = 0;
+	}
+	else{
+	    ++d;
+	}
+	++currentIt;
+      
+      
+    }while( (d < maxIt) && (difftime(time(NULL),start) < remainingTime) );
+    
+    delete [] _sCurrent.bits;
+    return make_pair(_SB, remainingTime - difftime(time(NULL),start) );
+}
+
+
 int main(int argc, char** argv){
 
     // Chargement du fichier de données à traiter
@@ -364,6 +416,7 @@ int main(int argc, char** argv){
     Solution _sCurrent;
     randomInit(&_sCurrent,_data);
     
+/*
     // Solution SB = meilleure solution, initialiement s
     Solution _SB;
     properCopy(_sCurrent, &_SB);
@@ -413,6 +466,15 @@ int main(int argc, char** argv){
     
     delete[] _sCurrent.bits;
     delete[] _SB.bits;
+*/
 
+    
+    pair<Solution, double> rTS = tabuSearch(_sCurrent, _data, 10, 50, 15);
+    
+    cout << "Temps restant : " <<rTS.second << endl;
+    cout << "Score rTS : " << rTS.first.score << endl;
+    
+    delete [] rTS.first.bits;
+    delete [] _sCurrent.bits;
     return 0;
 }
