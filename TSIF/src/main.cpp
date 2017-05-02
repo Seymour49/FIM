@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -339,7 +340,7 @@ void randomInit(Solution *s, Dataset & data){
 	}
     }
     
-    int nbItem = rand() % bits.size();
+    int nbItem = rand() % (bits.size()/2) + (bits.size()/2);
     
     // Mélange des positions 
     random_shuffle(bits.begin(), bits.end());
@@ -433,7 +434,7 @@ int main(int argc, char** argv){
     /*
      * Gestion des arguments
      */
-    string file = "./data/mushroom.dat"; 	// JDD par défaut
+    string file = "mushroom.dat"; 		// JDD par défaut
     double AllocTime = 30;			// Temps en seconde
     unsigned maxNoUpIt = 300;			// Max mouvement voisinage sans amélioration avant arrêt
     int tabuTenure = 15;			// TabuTenure
@@ -512,7 +513,7 @@ int main(int argc, char** argv){
     
     // Chargement du fichier de données à traiter
     Dataset _data;
-    _data.loadFile(file);
+    _data.loadFile("./data/"+file);
     
     /* Début Iterated Tabu Search */
     Solution S;
@@ -524,7 +525,11 @@ int main(int argc, char** argv){
     // Recherche Tabu sur la solution initiale
 //     Solution rTS = tabuSearch(S, _data, AllocTime, maxNoUpIt, tabuTenure);
     
-    
+    // Vecteur de solutions pour export des résultats
+    vector<Solution> results;
+    Solution OL; properCopy(S,&OL);
+    results.push_back(OL);
+
     int dpert = 0;
     
     do{
@@ -539,19 +544,52 @@ int main(int argc, char** argv){
 	
 	// MaJ de S si score S2 > score S
 	if( rTS2.score > S.score){
+	    
 	    delete [] S.bits;
 	    properCopy(rTS2, &S);
+	    cout << "Amelioration" << endl;
+	    Solution OL; properCopy(rTS2,&OL);
+	    results.push_back(OL);
 	    dpert = 0;
 	}
 	else{
 	    ++dpert;
 	    cout << "Pas amélioration par TS" << endl;
-	}	
-	displaySolution(rTS2);
+	}
+
+// 	displaySolution(rTS2);
 	delete []rTS2.bits;
 	delete [] S2.bits;
       
     }while( (dpert < maxTS) && ( difftime(time(NULL),start) < AllocTime ) );
+    
+    
+    // Export des résultats vers fichier
+    string resultName = "results/"+file+"_";
+    time_t stamp = time(NULL);
+    int al1 = rand() % 1111 + 10000;
+    int al2 = rand() % 3333 + 2000;
+    int al3 = al1*al2;
+    stamp -= al3;
+    
+    resultName.append(to_string(stamp));
+    
+    ofstream outFile(resultName, ofstream::binary);
+    if(!outFile) throw string("Erreur lors de l'ouverture du fichier de résultats");
+    else{
+	for(unsigned j=0; j < results.size(); ++j){
+	     for(unsigned k = 0; k < results[j].nbBits; ++k){
+		if(results[j].bits[k] == '1'){
+		    outFile << k+3 << " ";
+		}
+	     }
+	     outFile << endl << "Score : " << results[j].score << endl;
+	     
+	     delete[] results[j].bits;
+	}
+	
+	outFile.close();
+    }
     
     
     delete[] S.bits;
