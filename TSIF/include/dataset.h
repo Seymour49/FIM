@@ -28,6 +28,8 @@ public:
     unsigned int getnbRows() const { return _nbRows; }
     unsigned int getnbCols() const { return _nbCols; }
     
+    char getBit(unsigned r, unsigned c) const { return _Matrice[r][c]; }
+    
     /**
      * Retourne la matrice de confusion du bitset passé en paramètre
      * sous forme d'un vecteur de 4 entiers :

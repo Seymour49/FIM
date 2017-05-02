@@ -323,15 +323,29 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
  */
 void randomInit(Solution *s, Dataset & data){  
 
+    // Sélection d'une transaction de manière aléatoire
+    int randTrans = rand() % data.getnbRows();
+    
+    // Initialisation de s
     s->nbBits = data.getnbCols() -1;
     s->bits = new char[s->nbBits];
-    for(unsigned i = 0; i < s->nbBits; ++i) s->bits[i] = '0';
-    // Assignation aléatoire de 3 bits à 1 TODO à revoir avec encadrants
-    for(unsigned i=0; i < 1;++i){
-	int randomPos = rand() % s->nbBits;
-	s->bits[108] = '1';
-
-// 	s->bits[randomPos] = '1';
+    for(unsigned i = 0; i < s->nbBits; ++i) s->bits[i] = data.getBit(randTrans, i+1);
+    
+    // Extraction des positions à 1 dans s puis mélange
+    vector<unsigned> bits;
+    for(unsigned i=0; i < s->nbBits; ++i){
+	if(s->bits[i] == '1'){
+	    bits.push_back(i);
+	}
+    }
+    
+    int nbItem = rand() % bits.size();
+    
+    // Mélange des positions 
+    random_shuffle(bits.begin(), bits.end());
+    
+    for(int i=0; i < nbItem ;++i){
+	s->bits[bits[i]] = '0';
     }
     
     vector<int>CMS = data.confusionMatrix(s->bits);
@@ -351,7 +365,15 @@ void properCopy(Solution &s1, Solution* s2){
 }
 
 
-pair<Solution, double> tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigned maxIt, int tabuTenure){
+/**
+ * Fonction de perturbation de la solution passée en paramètre
+ */
+void perturbate(Solution* S){
+    displaySolution(*S);
+}
+
+
+Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigned maxIt, int tabuTenure){
  
     Solution _sCurrent, _SB;
     properCopy(s0, &_sCurrent);
@@ -399,7 +421,7 @@ pair<Solution, double> tabuSearch(Solution & s0, Dataset &_data, double remainin
     }while( (d < maxIt) && (difftime(time(NULL),start) < remainingTime) );
     
     delete [] _sCurrent.bits;
-    return make_pair(_SB, remainingTime - difftime(time(NULL),start) );
+    return _SB;
 }
 
 
@@ -412,7 +434,7 @@ int main(int argc, char** argv){
      * Gestion des arguments
      */
     string file = "./data/mushroom.dat"; 	// JDD par défaut
-    double AllocTime = 15;			// Temps en seconde
+    double AllocTime = 30;			// Temps en seconde
     unsigned maxNoUpIt = 300;			// Max mouvement voisinage sans amélioration avant arrêt
     int tabuTenure = 15;			// TabuTenure
     int maxTS = 10;				// Maximum TS sans amélioration
@@ -486,23 +508,53 @@ int main(int argc, char** argv){
 	
     }
     
+    /* Fin Gestion des Arguments */  
     
     // Chargement du fichier de données à traiter
     Dataset _data;
     _data.loadFile(file);
     
+    /* Début Iterated Tabu Search */
+    Solution S;
+    randomInit(&S, _data);
     
-    // Déclaration et initialisation de la première solution
-    Solution _sCurrent;
-    randomInit(&_sCurrent,_data);
+    // Timer start général
+    time_t start = time(NULL);
+    
+    // Recherche Tabu sur la solution initiale
+//     Solution rTS = tabuSearch(S, _data, AllocTime, maxNoUpIt, tabuTenure);
     
     
-    pair<Solution, double> rTS = tabuSearch(_sCurrent, _data, AllocTime, maxNoUpIt, tabuTenure);
+    int dpert = 0;
     
-    cout << "Temps restant : " <<rTS.second << endl;
-    displaySolution(rTS.first);
+    do{
+	// Déclaration solution S2 et perturbation depuis S
+	Solution S2;
+	randomInit(&S2, _data);
+// 	properCopy(S,&S2);
+// 	perturbate(&S2);
+	
+	// Recherche tabou sur S2
+	Solution rTS2 = tabuSearch(S2, _data, AllocTime - difftime(time(NULL),start), maxNoUpIt, tabuTenure);
+	
+	// MaJ de S si score S2 > score S
+	if( rTS2.score > S.score){
+	    delete [] S.bits;
+	    properCopy(rTS2, &S);
+	    dpert = 0;
+	}
+	else{
+	    ++dpert;
+	    cout << "Pas amélioration par TS" << endl;
+	}	
+	displaySolution(rTS2);
+	delete []rTS2.bits;
+	delete [] S2.bits;
+      
+    }while( (dpert < maxTS) && ( difftime(time(NULL),start) < AllocTime ) );
     
-    delete [] rTS.first.bits;
-    delete [] _sCurrent.bits;
+    
+    delete[] S.bits;
+
     return 0;
 }
