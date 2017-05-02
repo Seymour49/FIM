@@ -15,11 +15,11 @@ private:
     
     char** _Matrice;
     
-    
+    int reverseFlag;
 public:
   
     Dataset();    
-    Dataset(unsigned c, unsigned r);
+    Dataset(unsigned c, unsigned r, int rFlag);
     
     ~Dataset();
     
@@ -30,6 +30,7 @@ public:
     
     char getBit(unsigned r, unsigned c) const { return _Matrice[r][c]; }
     
+    void setReverseFlag(int reverseClass_flag);
     /**
      * Retourne la matrice de confusion du bitset passé en paramètre
      * sous forme d'un vecteur de 4 entiers :

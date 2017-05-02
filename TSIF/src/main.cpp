@@ -445,6 +445,7 @@ int main(int argc, char** argv){
     
     // Flag pour fonction évaluation
     static int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
+    static int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
     
     while(1){
 	int opt;
@@ -455,6 +456,8 @@ int main(int argc, char** argv){
 	    /* Flags, i.e pas de version courte */
 	    {"f1_measure", no_argument, &evaluate_flag, 0},
 	    {"perso_measure", no_argument, &evaluate_flag, 1},
+	    
+	    {"reverseC", no_argument, &reverseClass_flag, 1},
 	    
 	    
 	    /* Options avec version courtes */
@@ -513,6 +516,7 @@ int main(int argc, char** argv){
     
     // Chargement du fichier de données à traiter
     Dataset _data;
+    _data.setReverseFlag(reverseClass_flag);
     _data.loadFile("./data/"+file);
     
     /* Début Iterated Tabu Search */

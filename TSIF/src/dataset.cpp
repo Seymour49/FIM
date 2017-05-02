@@ -2,12 +2,12 @@
 
 using namespace std;
 
-Dataset::Dataset():_nbCols(0), _nbRows(0), _Matrice(NULL)
+Dataset::Dataset():_nbCols(0), _nbRows(0), _Matrice(NULL), reverseFlag(0)
 {
 }
 
 
-Dataset::Dataset(unsigned int c, unsigned int r): _nbCols(c), _nbRows(r)
+Dataset::Dataset(unsigned int c, unsigned int r, int rFlag): _nbCols(c), _nbRows(r), reverseFlag(rFlag)
 {
     _Matrice = new char*[_nbRows];
     for(unsigned i=0; i < _nbRows; ++i){
@@ -28,6 +28,13 @@ Dataset::~Dataset()
 	delete [] _Matrice;
     }
 }
+
+
+void Dataset::setReverseFlag(int reverseClass_flag)
+{
+    reverseFlag = reverseClass_flag;
+}
+
 
 
 void Dataset::loadFile(const string& filename)
@@ -97,12 +104,21 @@ void Dataset::loadFile(const string& filename)
 	    }
 	    
 	    // Détermination de la classe de la transaction
-	    if( mat[i][0] == 1){
-		_Matrice[i][0] = '0';
+	    if(reverseFlag == 0){
+		if( mat[i][0] == 1){
+		    _Matrice[i][0] = '1';
+		}
+		else{
+		    _Matrice[i][0] = '0';
+		}
 	    }
 	    else{
-		_Matrice[i][0] = '1';
-	      
+		if( mat[i][0] == 1){
+		    _Matrice[i][0] = '0';
+		}
+		else{
+		    _Matrice[i][0] = '1'; 
+		}
 	    }
 	    
 	    for(unsigned it=1; it < mat[i].size(); ++it){
