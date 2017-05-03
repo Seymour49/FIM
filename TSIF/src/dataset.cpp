@@ -220,6 +220,84 @@ vector< int > Dataset::tidList(char* bitset, vector<int> tid)
 
 
 
+
+
+void Dataset::encodeInteger(const string& filename)
+{
+    if ((_nbRows != 0)||(_nbCols != 0)) {
+	for (unsigned int i = 0; i < _nbRows; ++i) delete []_Matrice[i];
+	delete [] _Matrice;
+    }
+    
+    ifstream f(filename.c_str());
+  
+    if(!f) throw string("Erreur lors de l'ouverture du fichier " + filename + " ! (charDataSetO)");
+    else {
+	string line;
+	vector<string> tokens;
+	
+	vector<vector<string>> mat;
+	vector<string> row;
+	
+	vector<vector<pair<string,int>>> domaines;
+	vector<pair<string,int>> d;
+	int nbAttr = 1;
+	while( getline(f,line) ){
+	    
+	    if(!line.empty()){
+		  tokens.clear(); tokens.shrink_to_fit();
+		  row.clear(); row.shrink_to_fit();
+		  
+		  tokens = explode2(line);
+		  // Ligne paramètre
+		  if(tokens[0] == "#"){
+		      d.clear(); d.shrink_to_fit();
+		      
+		      for(unsigned i=1; i < tokens.size(); ++i){
+			  d.push_back(make_pair(tokens[i], nbAttr));
+			  ++nbAttr;
+		      }
+		      domaines.push_back(d);
+		  }
+		  else{
+		      for( unsigned int i=0; i < tokens.size(); ++i){
+			  row.push_back(tokens[i]);
+		      }
+		      
+		      mat.push_back(row);      
+		  }	  
+	    }  
+	}
+	
+	string fileName = "./data/mushroom.dat";
+	
+	ofstream outFile(fileName, ofstream::binary);
+	
+	if(!outFile) throw string("Erreur lors de l'ouverture du fichier");
+	else{
+	    // Début de la conversion, balancez ça dans un fichier
+	    for(unsigned i=0; i < mat.size(); ++i){
+		
+		for(unsigned j=0; j < mat[i].size(); ++j){    
+		    for(unsigned k=0; k < domaines[j].size(); ++k){
+			  if( mat[i][j] == domaines[j][k].first ){
+				outFile << domaines[j][k].second << " ";
+			  }
+		    }    
+		}
+		outFile << endl;
+	    }
+	    
+	    outFile.close();
+	}
+
+	f.close();
+    }
+}
+
+
+
+
 vector< string > explode2(const string& str)
 {
   istringstream split(str);
@@ -229,5 +307,3 @@ vector< string > explode2(const string& str)
 
   return tokens;
 }
-
-

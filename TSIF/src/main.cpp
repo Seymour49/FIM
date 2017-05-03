@@ -517,6 +517,7 @@ int main(int argc, char** argv){
     // Chargement du fichier de données à traiter
     Dataset _data;
     _data.setReverseFlag(reverseClass_flag);
+    
     _data.loadFile("./data/"+file);
     
     /* Début Iterated Tabu Search */
