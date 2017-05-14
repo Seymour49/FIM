@@ -29,7 +29,7 @@
 
 
 % Title Page
-\title{Université d'Angers \\  \emph{M2 Intelligence Décisionnelle \\} \hrulefill \\ \textbf{Recherche de motifs fréquents par algorithmes évolutionnaires} \\ \hrulefill}
+\title{Université d'Angers \\  \emph{M2 Intelligence Décisionnelle \\} \hrulefill \\ \textbf{Extraction de motifs fréquents sous contraintes par approche métaheuristique} \\ \hrulefill}
 \author{Ugo Rayer}
 
 
@@ -47,7 +47,7 @@
 
 
 \HRule \\[0.4cm]
-{ \huge \bfseries Recherche de motifs fréquents par algorithmes évolutionnaires}\\[0.4cm] 
+{ \huge \bfseries Extraction de motifs fréquents sous contraintes par approche métaheuristique}\\[0.4cm] 
 \HRule \\[1.5cm]
  
 
@@ -101,12 +101,12 @@ Le calcul des motifs fréquents est une notion essentielle dans de nombreux doma
 
 \hspace{0.15cm}L'avènement de l'ère du Big Data a fait rentrer le problème de calcul des motifs fréquents dans une nouvelle dimension. En effet, le volume de données produites dans tous les domaines a cru de manière vertigineuse ces dernières années, rendant l'extraction de connaissances d'autant plus nécessaire et délicate. De fait, la problématique du passage à l'échelle des méthodes exactes est devenue primordiale. Bien que divers efforts en ce sens aient été faits au travers de nombreuses publications, ils se concentrent généralement sur l'optimisation et la parallélisation des méthodes existantes. \\
 
-\hspace{0.15cm}Les algorithmes évolutionnaires font partie des techniques de résolution de problèmes combinatoires appelées méta-heuristiques. Les méta-heuristiques regroupent un ensemble de méthodes approchées à la résolution de problème combinatoire. Elles sont naturellement envisagée lorsque la complexité du problème étudié ne permet pas l'usage de méthodes exactes (aussi bien en temps qu'en espace). Le principe des algorithmes évolutionnaires est de manipuler un ensemble d'individus représentant chacun une solution au problème étudié. A chaque itération, certains individus sont modifiés via des opérateurs de croisement et de mutation. Chaque individu est évalué au regard d'une fonction à optimiser dépendant du problème étudié. \\
+\hspace{0.15cm}Les métaheuristiques sont des méthodes algorithmiques d'optimisation visant à résoudre des problèmes difficiles pour lesquels les méthodes exactes sont soit inexistantes soit impossible à mettre en place en pratique. Généralement, une métaheuristique tend à faire évoluer une ou plusieurs solutions vers un optimum global en effectuant itérativement des mouvements de voisinage (légère modification) sur la solution courante. De nombreuses métaheuristiques ont été proposées et largement appliquées à de nombreux problèmes, allant de la simple recherche locale aux algorithmes mémétiques \\
 
-\hspace{0.15cm}Ainsi, nous formaliserons le problème de calcul de motifs fréquents dans la section suivante avant d'effectuer un état de l'art des méthodes existantes en section 3. Le chapitre 4 sera dédié à la présentation de notre méthode dont nous présenterons les résultats en section 5. Le dernier chapitre sera consacré à la conclusion de cette étude et à une ouverture vers de futurs travaux.
+\hspace{0.15cm}Ainsi, nous formaliserons le problème de calcul de motifs fréquents sous contraintes dans la section suivante avant d'effectuer un état de l'art des méthodes existantes en section 3. Le chapitre 4 sera dédié à la présentation de notre méthode dont nous discuterons des résultats en section 5. Le dernier chapitre sera consacré à la conclusion de cette étude et à une ouverture vers de futurs travaux.
 
 \newpage
-\chapter{Le problème du calcul motifs fréquents}
+\chapter{Le problème du calcul des motifs fréquents}
 
 \section{Définition du problème}
 	La définition la plus courante du problème de calcul des motifs fréquents se fait par la théorie des ensembles. Nous verrons cependant dans le chapitre suivant qu'il peut également être décrit par la théorie des graphes. Nous présenterons dans un premier temps un cadre formel nécessaire à la définition du problème que nous illustrerons ensuite. Enfin, nous introduirons quelques propriétés dérivés de la définition du problème.
@@ -254,7 +254,7 @@ Toutefois, cette mesure ne permet pas d'introduire les deux seuils définissant 
 
 \begin{center}
 	Maximize $\sum{(X_{i} = 1})$ $\forall \emph{i} \in \mathcal{I}$ s.c. \\
-	$VP(X) \geq \emph{minsup}$ \\
+	$TP(X) \geq \emph{minsup}$ \\
 	$FN(X) \leq \emph{maxsup}$
 \end{center}
 
@@ -278,9 +278,23 @@ Le calcul de cette évaluation nécessite un scan complet du jeux de données af
 
 Ce voisinage est de taille fixe égale à la taille de $\mathcal{I}$. En effet, chaque item a soit la possibilité d'être ajouté ou bien d'être enlevé de la solution courante. Nous pourrons éventuellement contraindre plus spécifiquement ce voisinage en tentant de spécifier les items pouvant être ajoutés/supprimés en fonction d'informations extraites lors de l'évaluation de la solution courante.
 
-\subsection{Recherche locale}
+\subsection{Recherche tabou itérée}
 
-\hspace{1cm}Le premier algorithme que nous avons implémenté est une recherche tabou itérée. Plus précisément, nous commençons par choisir une solution initiale aléatoire puis nous effectuons de manière itérée plusieurs recherches tabous jusqu'à ce qu'un des deux critères d'arrêts soit atteint. Le premier est un temps d'exécution alloué à l'algorithme et le second est un nombre maximale de recherches n'aboutissant pas à une amélioration de la meilleure solution trouvée jusqu'ici. \\
+\hspace{1cm}Le premier algorithme que nous proposons est une recherche tabou itérée. Il débute par une première recherche tabou sur une solution initiale \emph{S} aléatoirement construite. Ensuite, nous effectuons itérativement une recherche tabou sur une solution annexe \emph{S'} issue de la perturbation de la solution courante. Si la recherche tabou sur \emph{S'} permet d'obtenir une solution de meilleure qualité, \emph{S'} remplace alors \emph{S} et le processus continue jusqu'à la fin du temps allouée ou à une stagnation de la recherche. \\
+
+\begin{algorithm}[H]
+\caption{Iterated Tabu Search}
+\SetKwInOut{Input}{Input}
+
+\SetKwInOut{Output}{Output}
+\Input{ TDB $\mathcal{T}$, tabu tenure \emph{tt}, total time \emph{TT}, profondeur $\beta$, nombre maximal de TS \emph{MaxTS} }
+
+\Output{ Pool de Solution 
+
+
+\end{algorithm}
+
+
 
 \hspace{1cm}A chaque itération, la solution courante est remplacée par la meilleure solution voisine, i.e. celle qui maximise la fonction d'évaluation. Il est par conséquent possible qu'aucun voisin n'améliore celle-ci, permettant par conséquent de sortir d'un optimum local. La mécanique tabou consiste ici à interdire à un item ayant été ajouté ou supprimé récemment de subir l'opération inverse pendant un nombre fixé d'itérations appelé \emph{tabu tenure}. Un critère d'aspiration est toutefois indispensable dans le cas où un item interdit améliore la meilleure solution globale. L'algorithme est présenté ci-après.
 	

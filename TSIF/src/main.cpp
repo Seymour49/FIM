@@ -6,31 +6,17 @@
 #include <array>
 #include <ctime>
 #include <getopt.h>
-
+#include <fstream>
 #include "../include/dataset.h"
 using namespace std;
 
 struct Solution{
     unsigned nbBits;
     char* bits;
+    int CM[4];
     float score; 
   
 }; typedef struct Solution Solution;
-
-
-/**
- * Fonction affichage en base 10 du bitset de la solution passée en paramètre
- */
-void displaySolution(const Solution &s){
-    
-    for(unsigned i=0; i < s.nbBits; ++i){
-	if( s.bits[i] == '1'){
-	    cout << i+3 << " ";
-	}
-    }
-    cout << endl << "Score : " << s.score << endl;
-}
-
 
 /**
  * Fonction retournant le nombre de bits à 1 dans la solution
@@ -63,171 +49,40 @@ float perso_measure(int k ,float tp, float fn, unsigned minS, unsigned maxS){
 
 
 /**
- * Comparaison de deux voisins selon leur score
+ * Calcul du PhiCoefficient depuis la matrice de confusion 
+ * représentée par les 4 nombres passés en paramètre
+ * Equivalent au coefficient de corrélation de Matthews
  */
-static bool compareGain(const pair<int,float> a, const pair<int,float> b){
-	return a.second > b.second;
+float phi_coeff(float tp, float fp, float tn, float fn){
+    float p = tp + fp;
+    float n = tn + fn;
+    float pcomp = tp + fn;
+    float ncomp = tn + fp;
+    
+    float num = tp*tn - fp*fn;
+    float den = sqrt(p*n*pcomp*ncomp);
+    
+    return num/den;
 }
 
 /**
- * Fonction d'évaluation du voisinage par union et intersection sur les tidlists
- * des différents ensembles.
- * Retourne la paire <pos,score> correspondant à l'item à fliper et au score qui lui
- * est associé.
+ * Youden's J Statistique. Calculée à partir de CM représentée
+ * par les 4 nombres passés en paramètre 
  */
-pair<unsigned,float> tidListNeighboor(Solution s, Dataset& data, vector<int> TL, int iter, float best){
-  
-    vector<pair<unsigned,float>> scores;
-    vector<Solution> voisins;
+float j_stat(float tp, float fp, float tn, float fn){
     
-    // TP = 0, FP = 1, TN, = 2, FN = 3
-    vector<vector<int>> sTL = data.confusionLists(s.bits);
-    
-    // Il y a N voisin
-    for(unsigned i=0; i < s.nbBits; ++i){
-      
-	// Si s[i] = 0, alors le voisin correspond à l'ajout de l'item
-	// Dans ce cas, voici les traitements à effectuer :
-	// TP' = TP n tidlist(i) puis FP' = FP u (TP\TP')
-	// FN' = FN n tidlist(i) puis TN' = TN u (FN\FN')
-	if( s.bits[i] == '0'){
-	    // Récupération des tidlists de l'1-itemset à ajouter
-	    Solution tmp;
-	    tmp.nbBits = s.nbBits;
-	    tmp.bits = new char[tmp.nbBits];
-	    for(unsigned k=0; k < tmp.nbBits; ++k){
-		tmp.bits[k] = '0';
-	    }
-	    tmp.bits[i] = '1';
-	    vector<vector<int>> tmpCL = data.confusionLists(tmp.bits);
-	    
-	    vector<int>::iterator it;
-	    // TP' = TP(S) inter TP(i) 
-	    vector<int> tpN(sTL[0].size());
-	    it = set_intersection(sTL[0].begin(), sTL[0].end(), tmpCL[0].begin(), tmpCL[0].end(), tpN.begin());
-	    tpN.resize(it-tpN.begin());
-	    
-	    // vmp = TP \ TP'
-	    vector<int> vmp(sTL[0].size() - tpN.size());
-	    it = set_difference(sTL[0].begin(), sTL[0].end(), tpN.begin(), tpN.end(), vmp.begin());
-	    vmp.resize(it-vmp.begin());
-	    
-	    // FP' = FP union vmp
-	    vector<int> fpN(sTL[1].size() + vmp.size());
-	    it = set_union(sTL[1].begin(), sTL[1].end(), vmp.begin(), vmp.end(), fpN.begin());
-	    fpN.resize(it-fpN.begin());
-	    
-	    // FN' = FN(S) inter FN(i)
-	    vector<int> fnN(sTL[3].size());
-	    it = set_intersection(sTL[3].begin(),sTL[3].end(), tmpCL[3].begin(), tmpCL[3].end(), fnN.begin());
-	    fnN.resize(it-fnN.begin());
-	    
-	    // vmp = FN\FN'
-	    vmp.clear(); vmp.shrink_to_fit(); vmp.resize(sTL[3].size() - fnN.size());
-	    it = set_difference(sTL[3].begin(), sTL[3].end(), fnN.begin(), fnN.end(), vmp.begin());
-	    vmp.resize(it - vmp.begin());
-	    
-	    // TN' = TN union FN\FN'
-	    vector<int> tnN(sTL[2].size() + vmp.size());
-	    it = set_union(sTL[2].begin(), sTL[2].end(), vmp.begin(), vmp.end(), tnN.begin());
-	    tnN.resize(it - tnN.begin());
-	    
-	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés.
-	    scores.push_back(make_pair(i,f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size())));
-	    delete []tmp.bits;
-	}
-	else{
-	    // L'item courant appartient à S, on doit donc le supprimer de S et tester ce voisin
-	    // On doit donc calculer sur FP(S) les transactions qui contiennent S\i puis les ajouter 
-	    // à TP pour obtenir TP' puis FP' (par différence)
-	    Solution tmp2;
-	    tmp2.nbBits = s.nbBits;
-	    tmp2.bits = new char[tmp2.nbBits];
-	    for( unsigned k=0; k < tmp2.nbBits; ++k){
-		tmp2.bits[k] = s.bits[k];
-	    }
-	    tmp2.bits[i] = '0';
-	    
-	    // la copie avec l'item en moins est prête à être traitée
-	    
-	    // Calcul de TP(tmp2) sur FP(S)n
-	    vector<int> vmp2 = data.tidList(tmp2.bits, sTL[1]);
-	    // TP' = TP U vmp2
-	    vector<int> tpN(sTL[0].size() + vmp2.size());
-	    vector<int>::iterator it;
-	    
-	    it = set_union(sTL[0].begin(), sTL[0].end(), vmp2.begin(), vmp2.end(), tpN.begin());
-	    tpN.resize(it - tpN.begin());
-	    
-	    // FP' = FP \ vmp2
-	    vector<int> fpN(sTL[1].size() - vmp2.size());
-	    it = set_difference(sTL[1].begin(), sTL[1].end(), vmp2.begin(), vmp2.end(), fpN.begin());
-	    fpN.resize(it - fpN.begin());
-	    
-	    // vmp2 = tidlist(tmp2, TN)
-	    vmp2.clear(); vmp2.shrink_to_fit();
-	    vmp2 = data.tidList(tmp2.bits, sTL[2]);
-	    
-	    // FN' = FN U vmp2
-	    vector<int> fnN(sTL[3].size() + vmp2.size());
-	    it = set_union(sTL[3].begin(), sTL[3].end(), vmp2.begin(), vmp2.end(), fnN.begin());
-	    fnN.resize(it - fnN.begin());
-	    
-	    // TN' = TN \ vmp2
-	    vector<int> tnN(sTL[2].size() - vmp2.size());
-	    it = set_difference(sTL[2].begin(), sTL[2].end(), vmp2.begin(), vmp2.end(), tnN.begin());
-	    tnN.resize(it - tnN.begin());
-	    
-	    // Les tidlists des ensemble tp,fp,tn,fn sont calculés. debuggage par somme
-	    scores.push_back(make_pair(i,f1_measure((float)tpN.size(),(float)fpN.size(),(float)fnN.size())));
-	    delete [] tmp2.bits;
-	}
-    }
-    
-    // Sélection du meilleur voisin non-tabou (avec mécanisme d'aspiration)
-    sort(scores.begin(), scores.end(), compareGain);
-    
-    // Mélange des différents clusters d'éléments de scores ayant la même valeur (i.e garde fou pour choix aléatoire des égalités)
-    vector<int> part;
-    
-    part.push_back(0);
-    for(unsigned i=1; i < scores.size(); ++i){
-	if( scores[i].second < scores[i-1].second ){
-	    part.push_back(i);
-	}
-    }
-    
-    part.push_back(scores.size()+1);
-    for(unsigned i=1; i < part.size(); ++i){
-	if( (part[i] - part[i-1]) > 1 ){
-	    random_shuffle(scores.begin()+part[i-1], scores.begin()+part[i] - 1);
-	}
-    }
-    
-    bool chosen = false;
-    unsigned pos = 0;
-    while ( !chosen && (pos < scores.size()) ){
-      
-	// Mouvement interdit par la liste tabou
-	if( TL[scores[pos].first] > iter ){
-	    
-	    // Mécanisme d'aspiration
-	    if( scores[pos].second > best ){
-		chosen = true;
-	    }
-	    else{
-		++pos;
-	    }
-	}
-	else{
-	    chosen = true;
-	}
-    }
-    
-//     cout << "Le meilleur voisin revient à fliper l'item " << scores[pos].first << " pour une évaluation à " << scores[pos].second << ". Gain = " << scores[pos].second - s.score << endl; 
-    
-    return scores[pos]; 
+    return ( (tp/(tp+fn)) + (tn/(tn+fp)) - 1);
 }
+
+/**
+ * Comparaison de deux voisins selon leur score ( vector<float> s[0])
+ */
+static bool compareGain(const pair<int,vector<float>> a, const pair<int,vector<float>> b){
+	return a.second[0] > b.second[0];
+}
+
+
+
 
 /**
  * Fonction d'évaluation du voisinage via scan complet de data pour chaque voisin
@@ -235,37 +90,90 @@ pair<unsigned,float> tidListNeighboor(Solution s, Dataset& data, vector<int> TL,
  * Retourne la paire <pos,score> correspondant à l'item à fliper et au score qui lui
  * est associé.
  */
-pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL, int iter, float best){
+pair<unsigned, vector<float>> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL, int iter, float best, int eval_flag, unsigned minS, unsigned maxS){
     
-    vector<pair<unsigned,float>> scores;
+    vector<pair<unsigned,vector<float>>> scores;
     
     // Copie de s dans tmp
     Solution tmp;
     tmp.nbBits = s.nbBits;
     tmp.bits = new char[tmp.nbBits];
-    
+    int nbK = 0;
     for(unsigned i=0; i < tmp.nbBits; ++i){
 	tmp.bits[i] = s.bits[i];
+	if( s.bits[i] == '1')
+	    ++nbK;
     }
     
     // Pour chacun des bits on teste sa valeur et on évalue le voisin correspondant
     for(unsigned i=0; i < tmp.nbBits; ++i){
 	if(tmp.bits[i] == '0'){
+	  
 	    tmp.bits[i] = '1';
+	    // TP = 0, FP = 1, TN = 2, FN = 3
 	    vector<int>cm = data.confusionMatrix(tmp.bits);
 	    
-	    scores.push_back(make_pair(i,f1_measure((float)cm[0], (float)cm[1], (float)cm[3])));
+	    // Score enregistre le score calculé en position 0 et la CM dans les positions suivantes
+	    vector<float> score;
+	    score.push_back(0.0);
+	    for(unsigned v=0; v < 4; ++v) score.push_back((float)cm[v]);
+	    
+	    switch(eval_flag){
+		case 0:
+		    score[0] = f1_measure(score[1], score[2], score[4]);
+		    break;
+		case 1:
+		    score[0] = perso_measure(nbK+1,score[1], score[4], minS, maxS );
+		    break;
+		case 2:
+		    score[0] = phi_coeff(score[1],score[2],score[3],score[4]);
+		    break;
+		case 3:
+		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
+		    break;
+	    }	    
+	    scores.push_back(make_pair(i,score));
 	    tmp.bits[i] = '0';
 	}
 	else{
 	    tmp.bits[i] = '0';
-	    if(getK(tmp) != 0){
+	    
+	    if((nbK-1) > 0){
 		vector<int>cm = data.confusionMatrix(tmp.bits);
 		
-		scores.push_back(make_pair(i,f1_measure((float)cm[0], (float)cm[1], (float)cm[3])));
+		for(unsigned v=0; v < 4; ++v){
+		    tmp.CM[v] = cm[v];
+		}
+		
+		// Score enregistre le score calculé en position 0 et la CM dans les positions suivantes
+		vector<float> score;
+		score.push_back(0.0);
+		for(unsigned v=0; v < 4; ++v) score.push_back((float)cm[v]);
+		
+		switch(eval_flag){
+		    case 0:
+		    score[0] = f1_measure(score[1], score[2], score[4]);
+		    break;
+		case 1:
+		    score[0] = perso_measure(nbK+1,score[1], score[4], minS, maxS );
+		    break;
+		case 2:
+		    score[0] = phi_coeff(score[1],score[2],score[3],score[4]);
+		    break;
+		case 3:
+		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
+		    break;
+		}
+		
+	    
+		scores.push_back(make_pair(i,score));
 	    }
 	    else{
-		scores.push_back(make_pair(i,0.0));
+		// Score enregistre le score calculé en position 0 et la CM dans les positions suivantes
+		vector<float> score;
+		for(unsigned v=0; v < 5; ++v) score.push_back(0.0);
+		
+		scores.push_back(make_pair(i,score));
 	    }
 	    tmp.bits[i] = '1';
 	}
@@ -279,7 +187,7 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
     
     part.push_back(0);
     for(unsigned i=1; i < scores.size(); ++i){
-	if( scores[i].second < scores[i-1].second ){
+	if( scores[i].second[0] < scores[i-1].second[0] ){
 	    part.push_back(i);
 	}
     }
@@ -291,6 +199,7 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
 	}
     }
     
+    // Choix du meilleur voisin parmi le cluster 0
     bool chosen = false;
     unsigned pos = 0;
     while ( !chosen && (pos < scores.size()) ){
@@ -299,8 +208,7 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
 	if( TL[scores[pos].first] > iter ){
 	    
 	    // Mécanisme d'aspiration
-	    if( scores[pos].second > best ){
-// 		cout << "Aspiration sur item " << scores[pos].first << endl;
+	    if( scores[pos].second[0] > best ){
 		chosen = true;
 	    }
 	    else{
@@ -311,8 +219,6 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
 	    chosen = true;
 	}
     }
-    
-//     cout << "Le meilleur voisin revient à fliper l'item " << scores[pos].first << " pour une évaluation à " << scores[pos].second << ". Gain = " << scores[pos].second - s.score << endl; 
     
     delete [] tmp.bits;
     
@@ -322,10 +228,14 @@ pair<unsigned, float> naiveNeighboor(Solution s, Dataset& data, vector<int> &TL,
 /**
  * Fonction d'initialisation de la solution passée en paramètre
  */
-void randomInit(Solution *s, Dataset & data){  
+void randomInit(Solution *s, Dataset & data, int eval_flag, unsigned minS, unsigned maxS){  
 
-    // Sélection d'une transaction de manière aléatoire
+    // Sélection d'une transaction de manière aléatoire 
     int randTrans = rand() % data.getnbRows();
+    
+    while( data.getBit(randTrans,0) == 0 ){
+	randTrans = rand() % data.getnbRows();
+    }
     
     // Initialisation de s
     s->nbBits = data.getnbCols() -1;
@@ -340,7 +250,7 @@ void randomInit(Solution *s, Dataset & data){
 	}
     }
     
-    int nbItem = rand() % (bits.size()/2) + (bits.size()/2);
+    int nbItem = rand() % (bits.size()/4) + (bits.size()/5);
     
     // Mélange des positions 
     random_shuffle(bits.begin(), bits.end());
@@ -350,7 +260,29 @@ void randomInit(Solution *s, Dataset & data){
     }
     
     vector<int>CMS = data.confusionMatrix(s->bits);
-    s->score = f1_measure((float)CMS[0], (float)CMS[1], (float)CMS[3]);
+    
+    for(unsigned v=0; v < 4; ++v){
+	s->CM[v] = CMS[v];
+    }
+    
+    float score = 0.0;
+    int nbK = getK(*s);
+    switch(eval_flag){
+	case 0:
+	    score = f1_measure((float)CMS[0], (float)CMS[1], (float)CMS[3]);
+	    break;
+	case 1:
+	    score = perso_measure(nbK,(float)CMS[0], (float)CMS[3], minS, maxS );
+	    break;
+	case 2:
+	    score = phi_coeff((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
+	    break;
+	case 3:
+	    score = j_stat((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
+	    break;
+    }
+    
+    s->score = score;
 }
 
 
@@ -363,24 +295,18 @@ void properCopy(Solution &s1, Solution* s2){
     s2->bits = new char[s2->nbBits];
     for(unsigned i=0; i < s2->nbBits; ++i) s2->bits[i] = s1.bits[i];
     s2->score = s1.score;
+    
+    for(unsigned i=0; i < 4; ++i) s2->CM[i] = s1.CM[i];
 }
 
 
-/**
- * Fonction de perturbation de la solution passée en paramètre
- */
-void perturbate(Solution* S){
-    displaySolution(*S);
-}
-
-
-Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigned maxIt, int tabuTenure){
+Solution tabuSearch(Solution & s0, Dataset &_data, long long int maxIt,long long int maxNoUp, int tabuTenure, int eval_flag, unsigned minS, unsigned maxS){
  
+    // Création des variables et initialisation par copie
     Solution _sCurrent, _SB;
     properCopy(s0, &_sCurrent);
     properCopy(_sCurrent, &_SB);
     
-    time_t start = time(NULL);
     unsigned d = 0;
     int currentIt = 0;
     
@@ -389,8 +315,8 @@ Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigne
     
     do{
 	// Sélection du meilleur voisin 
-	pair<unsigned, float> bestN;
-	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score);
+	pair<unsigned, vector<float>> bestN;
+	bestN = naiveNeighboor(_sCurrent, _data, TabuList, currentIt, _SB.score,eval_flag, minS, maxS);
 	
 	// Mise à jour TabuList
 	TabuList[bestN.first] = currentIt+tabuTenure;
@@ -402,14 +328,18 @@ Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigne
 	else{
 	    _sCurrent.bits[bestN.first] = '0';
 	}
-	_sCurrent.score = bestN.second;
 	
+	// Maj de CM et du score
+	_sCurrent.score = bestN.second[0];
+	for(unsigned k=0; k < 4; ++k) _sCurrent.CM[k] = (int)bestN.second[k+1];
 	// Comparaison avec la meilleure solution
 	if( _sCurrent.score > _SB.score ){
 	    // Copie de la solution courante vers la meilleure et remise à 0 de noUpIt
 	    for(unsigned m=0; m < _sCurrent.nbBits; ++m)
 		_SB.bits[m] = _sCurrent.bits[m];
 	    _SB.score = _sCurrent.score;
+	    
+	    for(unsigned k=0; k < 4; ++k) _SB.CM[k] = _sCurrent.CM[k];
 	    
 	    d = 0;
 	}
@@ -419,7 +349,7 @@ Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigne
 	++currentIt;
       
       
-    }while( (d < maxIt) && (difftime(time(NULL),start) < remainingTime) );
+    }while( (d < maxNoUp) && (currentIt < maxIt) );
     
     delete [] _sCurrent.bits;
     return _SB;
@@ -434,18 +364,18 @@ int main(int argc, char** argv){
     /*
      * Gestion des arguments
      */
-    string file = "mushroom.dat"; 		// JDD par défaut
-    double AllocTime = 30;			// Temps en seconde
-    unsigned maxNoUpIt = 300;			// Max mouvement voisinage sans amélioration avant arrêt
+    string file = "SD_I20_T50_D0.72"; 		// JDD par défaut
+    long long int maxIt = 10000;
+    long long int maxNoUp = 2500;			// Max mouvement voisinage sans amélioration avant arrêt
     int tabuTenure = 15;			// TabuTenure
-    int maxTS = 10;				// Maximum TS sans amélioration
     
     unsigned minS = 5000;			// Valeur du seuil minimal
     unsigned maxS = 250;			// Valeur du seuil maximal
     
+    unsigned repeat = 5;
     // Flag pour fonction évaluation
-    static int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
-    static int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
+    int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
+    int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
     
     while(1){
 	int opt;
@@ -456,16 +386,18 @@ int main(int argc, char** argv){
 	    /* Flags, i.e pas de version courte */
 	    {"f1_measure", no_argument, &evaluate_flag, 0},
 	    {"perso_measure", no_argument, &evaluate_flag, 1},
+	    {"phi_coeff", no_argument, &evaluate_flag, 2},
+	    {"j_stat", no_argument, &evaluate_flag, 3},
 	    
 	    {"reverseC", no_argument, &reverseClass_flag, 1},
 	    
 	    
 	    /* Options avec version courtes */
-	    {"allocTime", required_argument, 0, 't'},
+	    {"repeat", required_argument, 0, 'r'},
 	    {"dataFile", required_argument, 0, 'd'},
 	    {"tabuTenure", required_argument, 0, 'b'},
-	    {"maxNoUpTS", required_argument, 0, 'n'},
-	    {"maxTS", required_argument, 0, 's'},
+	    {"maxNoUp", required_argument, 0, 'n'},
+	    {"maxIT", required_argument, 0, 's'},
 	    {"minS", required_argument, 0, 'l'},
 	    {"maxS", required_argument, 0, 'u'},
 	    {0,0,0,0}
@@ -487,8 +419,8 @@ int main(int argc, char** argv){
 		if(long_options[option_index].flag != 0)
 		  break;
 		
-	    case 't':
-		  AllocTime = atof(optarg);
+	    case 'r':
+		  repeat = atoi(optarg);
 		  break;
 	    case 'd':
 		  file = string(optarg);
@@ -497,10 +429,10 @@ int main(int argc, char** argv){
 		  tabuTenure = atoi(optarg);
 		  break;  
 	    case 'n':
-		  maxNoUpIt = atoi(optarg);
+		  maxNoUp = stoll(optarg);
 		  break;
 	    case 's':
-		  maxTS = atoi(optarg);
+		  maxIt = stoll(optarg);
 		  break;  
 	    case 'l':
 		  minS = atoi(optarg);
@@ -518,86 +450,90 @@ int main(int argc, char** argv){
     Dataset _data;
     _data.setReverseFlag(reverseClass_flag);
     
-    _data.loadFile("./data/"+file);
-    
-    /* Début Iterated Tabu Search */
-    Solution S;
-    randomInit(&S, _data);
-    
-    // Timer start général
-    time_t start = time(NULL);
-    
-    // Recherche Tabu sur la solution initiale
-//     Solution rTS = tabuSearch(S, _data, AllocTime, maxNoUpIt, tabuTenure);
-    
+//     _data.loadFileInteger("./data/mushroom.dat");
+    _data.loadFileBinary("./data/"+file);
+   
+    tabuTenure = (_data.getnbCols()-1) / 3;
     // Vecteur de solutions pour export des résultats
     vector<Solution> results;
-    Solution OL; properCopy(S,&OL);
-    results.push_back(OL);
+   
+    for(unsigned r=0; r < repeat; ++r){
+	  
+	// Début Tabu Search 
+	Solution S;
+	randomInit(&S, _data,evaluate_flag, minS, maxS);
 
-    int dpert = 0;
-    
-    do{
-	// Déclaration solution S2 et perturbation depuis S
-	Solution S2;
-	randomInit(&S2, _data);
-// 	properCopy(S,&S2);
-// 	perturbate(&S2);
+	// Recherche Tabu sur la solution initiale
+	Solution rTS = tabuSearch(S, _data,maxIt, maxNoUp, tabuTenure, evaluate_flag, minS, maxS);
 	
-	// Recherche tabou sur S2
-	Solution rTS2 = tabuSearch(S2, _data, AllocTime - difftime(time(NULL),start), maxNoUpIt, tabuTenure);
+	Solution OL; properCopy(rTS,&OL);
+	results.push_back(OL);
 	
-	// MaJ de S si score S2 > score S
-	if( rTS2.score > S.score){
-	    
-	    delete [] S.bits;
-	    properCopy(rTS2, &S);
-	    cout << "Amelioration" << endl;
-	    Solution OL; properCopy(rTS2,&OL);
-	    results.push_back(OL);
-	    dpert = 0;
-	}
-	else{
-	    ++dpert;
-	    cout << "Pas amélioration par TS" << endl;
-	}
+	delete[] rTS.bits;
+	delete[] S.bits;
+    }
 
-// 	displaySolution(rTS2);
-	delete []rTS2.bits;
-	delete [] S2.bits;
-      
-    }while( (dpert < maxTS) && ( difftime(time(NULL),start) < AllocTime ) );
-    
-    
+    // Code de la recherche tabou itérée.
+
+
     // Export des résultats vers fichier
-    string resultName = "results/"+file+"_";
+    string resultName = "results/"+file+"_TS_";
+    // Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
+    switch(evaluate_flag){
+	case 0:
+	    resultName.append("f1_");
+	    break;
+	case 1:
+	    resultName.append("perso_");
+	    break;
+	case 2:
+	    resultName.append("phi_");
+	    break;
+	case 3:
+	    resultName.append("j_");
+	    break;      
+    }
+    
     time_t stamp = time(NULL);
-    int al1 = rand() % 1111 + 10000;
-    int al2 = rand() % 3333 + 2000;
+    int al1 = rand() % 1111 + 1000;
+    int al2 = rand() % 3333 + 200;
     int al3 = al1*al2;
     stamp -= al3;
     
     resultName.append(to_string(stamp));
     
+    
     ofstream outFile(resultName, ofstream::binary);
+    
     if(!outFile) throw string("Erreur lors de l'ouverture du fichier de résultats");
     else{
+      
+	vector<string> comment = _data.getComment();
+	for(unsigned i=0; i < comment.size(); ++i){
+	    outFile << comment[i] << endl;
+	}
+	outFile << endl;
 	for(unsigned j=0; j < results.size(); ++j){
-	     for(unsigned k = 0; k < results[j].nbBits; ++k){
-		if(results[j].bits[k] == '1'){
-		    outFile << k+3 << " ";
-		}
+	     for(long long unsigned k = 0; k < results[j].nbBits; ++k){
+		
+		    outFile << results[j].bits[k] << " ";
+		
 	     }
 	     outFile << endl << "Score : " << results[j].score << endl;
 	     
+	     for( long long unsigned k=0; k < results[j].nbBits; ++k){
+		  if( results[j].bits[k] == '1' )
+		      outFile << k << " ";
+	     }
+	     outFile << endl;
+	     outFile << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1] << endl;
+	     outFile << "TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
 	     delete[] results[j].bits;
 	}
 	
 	outFile.close();
     }
     
-    
-    delete[] S.bits;
 
     return 0;
 }

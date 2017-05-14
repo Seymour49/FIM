@@ -36,8 +36,8 @@ void Dataset::setReverseFlag(int reverseClass_flag)
 }
 
 
-
-void Dataset::loadFile(const string& filename)
+// A utiliser pour mushroom
+void Dataset::loadFileInteger(const string& filename)
 {
     if ((_nbRows != 0)||(_nbCols != 0)) {
 	for (unsigned int i = 0; i < _nbRows; ++i) delete []_Matrice[i];
@@ -131,6 +131,76 @@ void Dataset::loadFile(const string& filename)
 }
 
 
+void Dataset::loadFileBinary(const string& filename)
+{
+
+   if ((_nbRows != 0)||(_nbCols != 0)) {
+	for (unsigned int i = 0; i < _nbRows; ++i) delete []_Matrice[i];
+	delete [] _Matrice;
+    }
+    
+    ifstream f(filename.c_str());
+  
+    if(!f) throw string("Erreur lors de l'ouverture du fichier " + filename + " ! (charDataSetO)");
+    else {
+      
+      
+// 	cout << "Lecture commentaire" << endl;
+	string line;
+	vector<string> tokens;
+	
+	vector<vector<int>> mat;
+	vector<int> row;
+	
+	while( getline(f,line) ){
+	
+	    if(!line.empty()){
+		  tokens.clear(); tokens.shrink_to_fit();
+		  row.clear(); row.shrink_to_fit();
+		  
+		  tokens = explode2(line);
+		  
+		  // La ligne n'est plus un paramètre
+		  if( tokens[0].compare("#") != 0 ){
+		    
+		      for( long long unsigned i=0; i < tokens.size(); ++i){
+			  row.push_back(atoi(tokens[i].c_str()));
+		      }
+		    
+		      mat.push_back(row);
+		  }
+		  else{
+		      _comment.push_back(line);
+		      
+		  }
+	      }
+	  
+	}
+	
+	// Matrice binaire totalement remplie
+	_nbRows = mat.size();
+	_nbCols = mat[0].size();
+	
+	_Matrice = new char*[_nbRows];
+	
+	for(long long unsigned t=0; t < _nbRows; ++t){
+	    _Matrice[t] = new char[_nbCols];
+	    
+	    for(long long unsigned k=0; k < _nbCols; ++k){
+		if( mat[t][k] == 1 ){
+		    _Matrice[t][k] = '1';
+		}
+		else{
+		    _Matrice[t][k] = '0';
+		}
+	    }
+	}
+	f.close();
+    }    
+}
+
+
+
 bool Dataset::include(char* bitset, unsigned int i)
 {
     bool isIn = true;
@@ -153,20 +223,27 @@ vector< int > Dataset::confusionMatrix(char* bitset)
     }
     
     for(unsigned i=0; i < _nbRows; ++i){
+      
+	// Classe prédite = 1
 	if( include(bitset, i) ){
+	    // Classe réelle = 1
 	    if(_Matrice[i][0] == '1'){
-		CM[0] = CM[0] + 1;
+		++CM[0];	// TP
 	    }
+	    // Classe réelle = 0
 	    else{
-		CM[3] = CM[3] + 1;
+		++CM[1]; 	// FP
 	    }
 	}
+	// Classe prédite = 0
 	else{
+	    // Classe réelle = 1
 	    if(_Matrice[i][0] == '1' ){
-		CM[1] = CM[1] + 1;	      
+		++CM[3];	// FN	      
 	    }
+	    // Classe réelle = 0
 	    else{
-		CM[2] = CM[2] + 1;
+		++CM[2];	// TN
 	    } 
 	}
     }
@@ -189,12 +266,12 @@ vector< vector< int > > Dataset::confusionLists(char* bitset)
 		CL[0].push_back(i);
 	    }
 	    else{
-		CL[3].push_back(i);
+		CL[1].push_back(i);
 	    }
 	}
 	else{
 	    if(_Matrice[i][0] == '1' ){
-		CL[1].push_back(i);
+		CL[3].push_back(i);
 	    }
 	    else{
 		CL[2].push_back(i);
@@ -217,9 +294,6 @@ vector< int > Dataset::tidList(char* bitset, vector<int> tid)
     }
     return tidR;
 }
-
-
-
 
 
 void Dataset::encodeInteger(const string& filename)
@@ -287,15 +361,11 @@ void Dataset::encodeInteger(const string& filename)
 		}
 		outFile << endl;
 	    }
-	    
 	    outFile.close();
 	}
-
 	f.close();
     }
 }
-
-
 
 
 vector< string > explode2(const string& str)

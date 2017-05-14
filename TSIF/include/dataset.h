@@ -10,8 +10,10 @@
 class Dataset {
   
 private:
-    unsigned int _nbCols;
-    unsigned int _nbRows;
+    long long unsigned int _nbCols;
+    long long unsigned int _nbRows;
+    
+    std::vector<std::string> _comment;
     
     char** _Matrice;
     
@@ -23,10 +25,14 @@ public:
     
     ~Dataset();
     
-    void loadFile(const std::string& filename);
+    void loadFileInteger(const std::string& filename);
+    
+    void loadFileBinary(const std::string & filename);
     
     unsigned int getnbRows() const { return _nbRows; }
     unsigned int getnbCols() const { return _nbCols; }
+    
+    std::vector<std::string> getComment() const { return _comment;}
     
     char getBit(unsigned r, unsigned c) const { return _Matrice[r][c]; }
     

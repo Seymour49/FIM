@@ -1,0 +1,33 @@
+# Données aléatoirement générées avec les paramètres suivants : 
+# Nb Items : 20 | Nb Trans : 50
+# Densité : 0.72 | Proportion Classe + : 0.6
+# Proportion Motif Classe + : 0.8
+# 0 0 0 0 1 0 1 0 1 0 0 0 0 0 1 1 0 0 0 0
+# 4 6 8 14 15
+# TP 24 | FP 0 | TN 20 | FN 6
+
+0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 1 0 0 0 0 
+Score : 0.892857
+6 8 15 
+TP : 25 | FP : 1
+TN : 19 | FN : 5
+0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 
+Score : 0.892857
+6 15 
+TP : 25 | FP : 1
+TN : 19 | FN : 5
+0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 1 0 0 0 0 
+Score : 0.892857
+6 8 15 
+TP : 25 | FP : 1
+TN : 19 | FN : 5
+0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 
+Score : 0.892857
+4 14 
+TP : 25 | FP : 1
+TN : 19 | FN : 5
+0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 1 0 0 0 0 
+Score : 0.892857
+6 8 15 
+TP : 25 | FP : 1
+TN : 19 | FN : 5
