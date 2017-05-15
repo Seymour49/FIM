@@ -283,11 +283,11 @@ vector< vector< int > > Dataset::confusionLists(char* bitset)
 }
 
 
-vector< int > Dataset::tidList(char* bitset, vector<int> tid)
+vector<long long int > Dataset::tidList(char* bitset, vector<long long int> tid)
 {
-    vector<int> tidR;
+    vector<long long int> tidR;
     
-    for( unsigned t = 0; t < tid.size(); ++t){
+    for( long long unsigned t = 0; t < tid.size(); ++t){
 	if( include(bitset, tid[t]) ){
 	    tidR.push_back(tid[t]);
 	}
@@ -365,6 +365,62 @@ void Dataset::encodeInteger(const string& filename)
 	}
 	f.close();
     }
+}
+
+
+long long unsigned int Dataset::getNBTCP()
+{
+    long long unsigned r = 0;
+    
+    for(long long unsigned t=0; t < _nbRows; ++t){
+	if( _Matrice[t][0] == '1') ++r;      
+    }
+    
+    return r;
+}
+
+
+
+void Dataset::clearDataset(char* bitset)
+{
+    vector<long long int> tid;
+    for( long long unsigned t=0; t < _nbRows; ++t) tid.push_back(t);
+    
+    vector<long long int> tidTP = tidList(bitset,tid);
+    
+    vector<long long int>::iterator it = set_difference(tid.begin(),tid.end(),tidTP.begin(),tidTP.end(),tid.begin());
+    
+    tid.resize(it-tid.begin());
+    
+    char** newM = new char*[tid.size()];
+    for(long long unsigned t=0; t < tid.size(); ++t){
+	newM[t] = new char[_nbCols];
+	
+	for(long long unsigned k=0; k < _nbCols; ++k){
+	    newM[t][k] = _Matrice[tid[t]][k];	  
+	}
+    }
+    
+    for(long long unsigned t=0; t < _nbRows; ++t){
+	delete[] _Matrice[t];
+    }
+    
+    delete[] _Matrice;
+    
+    cout << "Retrait de " << _nbRows - tid.size() << " transactions" << endl;
+    
+    _nbRows = tid.size();
+    
+    _Matrice = new char*[_nbRows];
+    for( long long unsigned t=0; t < _nbRows; ++t){
+	_Matrice[t] = new char[_nbCols];
+	for(long long unsigned k=0; k < _nbCols; ++k){
+	    _Matrice[t][k] = newM[t][k];
+	}
+	delete[] newM[t];
+    }
+    delete[] newM;
+    
 }
 
 

@@ -89,6 +89,17 @@ float j_stat(float tp, float fp, float tn, float fn){
     return ( (tp/(tp+fn)) + (tn/(tn+fp)) - 1);
 }
 
+
+/**
+ * Fonction de gain utilisée dans l'algorithme FOIL
+ * G = TP* (log( TP/(TP+FP) ) - log( (TP+FN)/(TP+FP+TN+FN) ) )
+ */
+float foil(float tp, float fp, float tn, float fn){
+ 
+    return tp*(log(tp/(tp+fp))-log((tp+fn)/(tp+fp+tn+fn)));
+}
+
+
 /**
  * Comparaison de deux voisins selon leur score ( vector<float> s[0])
  */
@@ -96,180 +107,6 @@ static bool compareGain(const pair<int,vector<float>> a, const pair<int,vector<f
 	return a.second[0] > b.second[0];
 }
 
-
-/**
- * Méthode de calcul du voisinage n'effectuant qu'un scan de la base de données
- * et maintenant un compteur de 5 float par voisins. 
- * 3 fois moins rapide que la version naïve
- */
-pair<unsigned, vector<float>> neighboor( Solution s, Dataset& data, vector<int> &TL, int iter, float best, int eval_flag, unsigned minS, unsigned maxS){
- 
-    vector<pair<unsigned, vector<float>>> scores;
-    
-    int nbk = 0;
-    
-    for(long long int i=0; i < s.nbBits; ++i){      
-	vector<float> cm(5,0.0);
-	scores.push_back(make_pair(i,cm));
-	if( s.bits[i] == '1') ++nbk;
-    }
-    
-    
-    for(long long int t=0; t < data.getnbRows(); ++t){
-      
-	  // La solution n'est pas incluse
-	  if( !data.include(s.bits, t) ){
-	    
-	      for(long long int i=0; i < s.nbBits; ++i){
-		
-		  // Ajout d'un item = pas de changement
-		  if( s.bits[i] == '0' ){
-		      
-		      if( data.getBit(t,0) == '1' ){
-			
-			  ++scores[i].second[4];
-		      }
-		      else{
-			  ++scores[i].second[3];
-		      }
-		  }
-		  // Retrait de l'item
-		  else{
-		    char *tmp = new char[s.nbBits];
-		    for(long long int x=0; x < s.nbBits; ++x){
-			tmp[x] = s.bits[x];
-		    }
-		    tmp[i] = '0';
-		    
-		    if( data.include(tmp,t) ){
-			if( data.getBit(t,0) == '1'){
-			    ++scores[i].second[1];
-			}
-			else{
-			    ++scores[i].second[2];
-			}
-		    }
-		    else{
-			if( data.getBit(t,0) == '1'){
-			    ++scores[i].second[4];
-			}
-			else{
-			    ++scores[i].second[3];
-			}
-		    }
-		    delete[] tmp;
-		  }
-		
-	      }
-	    
-	  }
-	  // La solution est incluse dans t
-	  else{
-	    
-	      for( long long int i=0; i < s.nbBits; ++i){
-		  // Retirer un item ne changera pas le classement de t
-		  if( s.bits[i] == '1' ){
-		    
-		      if( data.getBit(t,0) == '1' ){
-			  ++scores[i].second[1];
-		      }
-		      else{
-			  ++scores[i].second[2];
-		      }		    
-		  }
-		  /*  Ajout d'un item. Si l'item appartient à t, ça ne change rien
-		      Sinon : si t est positive, alors t appartient à FN
-			      sinon, t appartient à TN
-		  */
-		  else{
-		      
-		      if( data.getBit(t,i+1) == '1' ){
-			  if( data.getBit(t,0) == '1' ){
-			      ++scores[i].second[1];
-			  }
-			  else{
-			      ++scores[i].second[2];
-			  }
-		      }
-		      else{
-			  if( data.getBit(t,0) == '1'){
-			      ++scores[i].second[4];
-			  }
-			  else{
-			      ++scores[i].second[3];
-			  }
-		      }
-		  }
-	      }
-	  }
-    }
-    
-    // Calcul du score selon eval_flag
-    for( long long unsigned i=0; i < scores.size(); ++i){
-      
-	switch(eval_flag){
-	    case 0:
-		scores[i].second[0] = f1_measure(scores[i].second[1],scores[i].second[2],scores[i].second[4]);
-		break;
-	    case 1:
-		if( s.bits[i] == '1')
-		    scores[i].second[0] = perso_measure(nbk-1,scores[i].second[1],scores[i].second[4], minS, maxS);
-		else
-		    scores[i].second[0] = perso_measure(nbk+1,scores[i].second[1],scores[i].second[4], minS, maxS);
-		break;
-	    case 2:
-		scores[i].second[0] = phi_coeff(scores[i].second[1],scores[i].second[2],scores[i].second[3],scores[i].second[4]);
-		break;
-	    case 3:
-		scores[i].second[0] = j_stat(scores[i].second[1],scores[i].second[2],scores[i].second[3],scores[i].second[4]);
-		break;
-	}
-    }
-    
-    // Tri via compareGain
-    sort(scores.begin(), scores.end(), compareGain);
-    
-    // Détection des mouvements de score équivalent
-    // Mélange des différents clusters d'éléments de scores ayant la même valeur (i.e garde fou pour choix aléatoire des égalités)
-    vector<int> part;
-    
-    part.push_back(0);
-    for(unsigned i=1; i < scores.size(); ++i){
-	if( scores[i].second[0] < scores[i-1].second[0] ){
-	    part.push_back(i);
-	}
-    }
-    
-    part.push_back(scores.size()+1);
-    for(unsigned i=1; i < part.size(); ++i){
-	if( (part[i] - part[i-1]) > 1 ){
-	    random_shuffle(scores.begin()+part[i-1], scores.begin()+part[i] - 1);
-	}
-    }
-    
-    // Sélection aléatoire avec aspiration tabou
-    bool chosen = false;
-    long long unsigned pos = 0;
-    while ( !chosen && (pos < scores.size()) ){
-      
-	// Mouvement interdit par la liste tabou
-	if( TL[scores[pos].first] > iter ){
-	    
-	    // Mécanisme d'aspiration
-	    if( scores[pos].second[0] > best ){
-		chosen = true;
-	    }
-	    else{
-		++pos;
-	    }
-	}
-	else{
-	    chosen = true;
-	}
-    }
-
-    return scores[pos];
-}
 
 /**
  * Fonction d'évaluation du voisinage via scan complet de data pour chaque voisin
@@ -318,6 +155,9 @@ pair<unsigned, vector<float>> naiveNeighboor(Solution s, Dataset& data, vector<i
 		case 3:
 		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
 		    break;
+		case 4:
+		    score[0] = foil(score[1],score[2],score[3],score[4]);
+		    break;
 	    }	    
 	    scores.push_back(make_pair(i,score));
 	    tmp.bits[i] = '0';
@@ -349,6 +189,9 @@ pair<unsigned, vector<float>> naiveNeighboor(Solution s, Dataset& data, vector<i
 		    break;
 		case 3:
 		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
+		    break;
+		case 4:
+		    score[0] = foil(score[1],score[2],score[3],score[4]);
 		    break;
 		}
 		
@@ -467,6 +310,9 @@ void randomInit(Solution *s, Dataset & data, int eval_flag, unsigned minS, unsig
 	case 3:
 	    score = j_stat((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
 	    break;
+	case 4:
+	    score = foil((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
+	    break;
     }
     
     s->score = score;
@@ -495,16 +341,15 @@ void perturbate(Solution* S){
 }
 
 
-Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigned maxIt, int tabuTenure, int eval_flag, unsigned minS, unsigned maxS){
+Solution tabuSearch(Solution & s0, Dataset &_data,long long int maxNoUp, long long int maxIt, int tabuTenure, int eval_flag, unsigned minS, unsigned maxS){
  
     // Création des variables et initialisation par copie
     Solution _sCurrent, _SB;
     properCopy(s0, &_sCurrent);
     properCopy(_sCurrent, &_SB);
     
-    time_t start = time(NULL);
-    unsigned d = 0;
-    int currentIt = 0;
+    long long int d = 0;
+    long long int currentIt = 0;
     
     // Initialisation de la liste tabou
     vector<int> TabuList(_SB.nbBits, 0);
@@ -545,7 +390,7 @@ Solution tabuSearch(Solution & s0, Dataset &_data, double remainingTime, unsigne
 	++currentIt;
       
       
-    }while( (d < maxIt) && (difftime(time(NULL),start) < remainingTime) );
+    }while( (d < maxNoUp) && (currentIt < maxIt) );
     
     delete [] _sCurrent.bits;
     return _SB;
@@ -561,10 +406,10 @@ int main(int argc, char** argv){
      * Gestion des arguments
      */
     string file = "SD_I20_T50_D0.72"; 		// JDD par défaut
-    double AllocTime = 300;			// Temps en seconde
-    unsigned maxNoUpIt = 10000;			// Max mouvement voisinage sans amélioration avant arrêt
+    
+    long long int maxIt = 10000;
+    long long int maxNoUp = 2500;		// Max mouvement voisinage sans amélioration avant arrêt
     int tabuTenure = 15;			// TabuTenure
-    int maxTS = 10;				// Maximum TS sans amélioration
     
     unsigned minS = 5000;			// Valeur du seuil minimal
     unsigned maxS = 250;			// Valeur du seuil maximal
@@ -584,16 +429,16 @@ int main(int argc, char** argv){
 	    {"perso_measure", no_argument, &evaluate_flag, 1},
 	    {"phi_coeff", no_argument, &evaluate_flag, 2},
 	    {"j_stat", no_argument, &evaluate_flag, 3},
+	    {"foil", no_argument, &evaluate_flag, 4},
 	    
 	    {"reverseC", no_argument, &reverseClass_flag, 1},
 	    
 	    
 	    /* Options avec version courtes */
-	    {"allocTime", required_argument, 0, 't'},
 	    {"dataFile", required_argument, 0, 'd'},
 	    {"tabuTenure", required_argument, 0, 'b'},
-	    {"maxNoUpTS", required_argument, 0, 'n'},
-	    {"maxTS", required_argument, 0, 's'},
+	    {"maxNoUp", required_argument, 0, 'n'},
+	    {"maxIt", required_argument, 0, 's'},
 	    {"minS", required_argument, 0, 'l'},
 	    {"maxS", required_argument, 0, 'u'},
 	    {0,0,0,0}
@@ -602,7 +447,7 @@ int main(int argc, char** argv){
 	// getopt_long recupere l'option ici
 	int option_index = 0;
 	
-	opt = getopt_long(argc,argv, "t:d:b:n:s:l:u:", long_options, &option_index);
+	opt = getopt_long(argc,argv, "d:b:n:s:l:u:", long_options, &option_index);
 	
 	// fin des options
 	if(opt == -1)
@@ -615,9 +460,6 @@ int main(int argc, char** argv){
 		if(long_options[option_index].flag != 0)
 		  break;
 		
-	    case 't':
-		  AllocTime = atof(optarg);
-		  break;
 	    case 'd':
 		  file = string(optarg);
 		  break;
@@ -625,10 +467,10 @@ int main(int argc, char** argv){
 		  tabuTenure = atoi(optarg);
 		  break;  
 	    case 'n':
-		  maxNoUpIt = atoi(optarg);
+		  maxNoUp = atoi(optarg);
 		  break;
 	    case 's':
-		  maxTS = atoi(optarg);
+		  maxIt = atoi(optarg);
 		  break;  
 	    case 'l':
 		  minS = atoi(optarg);
@@ -646,68 +488,51 @@ int main(int argc, char** argv){
     Dataset _data;
     _data.setReverseFlag(reverseClass_flag);
     
-//     _data.loadFileInteger("./data/mushroom.dat");
     _data.loadFileBinary("./data/"+file);
    
-   
-      // Début Iterated Tabu Search 
-      Solution S;
-      randomInit(&S, _data,evaluate_flag, minS, maxS);
-      vector<int> TL(S.nbBits,0);
-      // Test neighboor
-      pair<unsigned, vector<float>> t;
-      t = naiveNeighboor(S, _data,TL,0,0.0, 0, 0, 0);
-    
-/*    
-    // Timer start général
-    time_t start = time(NULL);
-    
-    // Recherche Tabu sur la solution initiale
-    Solution rTS = tabuSearch(S, _data, AllocTime, maxNoUpIt, tabuTenure, evaluate_flag, minS, maxS);
-    
     // Vecteur de solutions pour export des résultats
     vector<Solution> results;
-    Solution OL; properCopy(rTS,&OL);
-    results.push_back(OL);
-*/
-
+    
     // Code de la recherche tabou itérée.
-/*
-    int dpert = 0;
    
     do{
-	// Déclaration solution S2 et perturbation depuis S
-	Solution S2;
+	// Déclaration solution S2
+	Solution S;
 
-// 	properCopy(S,&S2);
-// 	perturbate(&S2);
-	randomInit(&S2, _data,evaluate_flag, minS, maxS);
+	randomInit(&S, _data,evaluate_flag, minS, maxS);
 	
 	// Recherche tabou sur S2
-	Solution rTS2 = tabuSearch(S2, _data, AllocTime - difftime(time(NULL),start), maxNoUpIt, tabuTenure, evaluate_flag, minS, maxS);
+	Solution rTS2 = tabuSearch(S, _data, maxNoUp, maxIt, tabuTenure, evaluate_flag, minS, maxS);
 	
-	// MaJ de S si score S2 > score S
-	if( rTS2.score > S.score){
-	    
-	    delete [] S.bits;
-	    properCopy(rTS2, &S);
-	    cout << "Amelioration" << endl;
-	    Solution OL; properCopy(rTS2,&OL);
-	    results.push_back(OL);
-	    dpert = 0;
-	}
-	else{
-	    ++dpert;
-	    cout << "Pas amélioration par TS" << endl;
-	}
-
+	// On retire de _data l'ensemble des tid couverts par rTS2    
+	_data.clearDataset(rTS2.bits);
+	
+	Solution OL; properCopy(rTS2,&OL);
+	results.push_back(OL);
+	
 	delete []rTS2.bits;
-	delete [] S2.bits;
+	delete [] S.bits;
       
-    }while( (dpert < maxTS) && ( difftime(time(NULL),start) < AllocTime ) );
+    }while( _data.getNBTCP() > 0 );
     
-*/  
-
+ 
+    for(unsigned j=0; j < results.size(); ++j){
+	     for(long long unsigned k = 0; k < results[j].nbBits; ++k){
+		
+		    cout << results[j].bits[k] << " ";
+		
+	     }
+	     cout << endl << "Score : " << results[j].score << endl;
+	     
+	     for( long long unsigned k=0; k < results[j].nbBits; ++k){
+		  if( results[j].bits[k] == '1' )
+		      cout<< k << " ";
+	     }
+	     cout << endl;
+	     cout << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1] << endl;
+	     cout << "TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
+	     delete[] results[j].bits;
+	}
 /*
     // Export des résultats vers fichier
     string resultName = "results/"+file+"_";
@@ -724,7 +549,10 @@ int main(int argc, char** argv){
 	    break;
 	case 3:
 	    resultName.append("j_");
-	    break;      
+	    break;
+	case 4:
+	    resultName.append("foil_");
+	    break;
     }
     
     time_t stamp = time(NULL);
