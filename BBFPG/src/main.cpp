@@ -79,8 +79,8 @@ float j_stat(float tp, float fp, float tn, float fn){
 /**
  * Comparaison de deux voisins selon leur score ( vector<float> s[0])
  */
-static bool compareGain(const pair<int,vector<float>> a, const pair<int,vector<float>> b){
-	return a.second[0] > b.second[0];
+static bool compareGain(const Solution a, const Solution b){
+	return a.score > b.score;
 }
 
 
@@ -100,6 +100,16 @@ void properCopy(Solution &s1, Solution* s2){
 }
 
 
+vector< string > explode4(const string& str)
+{
+  istringstream split(str);
+  vector< string > tokens;
+
+  for(string each; getline(split, each, ' '); tokens.push_back( each.c_str()) );
+
+  return tokens;
+}
+
 
 int main(int argc, char** argv){
 
@@ -109,8 +119,10 @@ int main(int argc, char** argv){
     /*
      * Gestion des arguments
      */
-    string file = "SD_I20_T50_D0.72"; 		// JDD par défaut
-
+    string file = "SD_I20_T50_D0.55"; 		// JDD par défaut
+    string fpfile = "SD_I20_T50_D0.55CP_for_FP_result_c20"; 	// Résultat fpgrowth
+    
+    
     // Flag pour fonction évaluation
     int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
     int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
@@ -131,13 +143,14 @@ int main(int argc, char** argv){
 	    
 	    /* Options avec version courtes */
 	    {"dataFile", required_argument, 0, 'd'},
+	    {"fpFile", required_argument, 0, 'f'},
 	    {0,0,0,0}
 	};
 	
 	// getopt_long recupere l'option ici
 	int option_index = 0;
 	
-	opt = getopt_long(argc,argv, "d:t:s:l:u:r:", long_options, &option_index);
+	opt = getopt_long(argc,argv, "d:", long_options, &option_index);
 	
 	// fin des options
 	if(opt == -1)
@@ -152,6 +165,8 @@ int main(int argc, char** argv){
 	    case 'd':
 		  file = string(optarg);
 		  break;
+	    case 'f':
+		  fpfile = string(optarg);
 	}
 	
     }
@@ -162,38 +177,89 @@ int main(int argc, char** argv){
     Dataset _data;
     _data.setReverseFlag(reverseClass_flag);
     
-    _data.loadFileBinary("./data/"+file);
+    _data.loadFileBinary("./dataset/"+file);
    
     // Charger  le fichier d'itemset obtenus par fpgrowth
+    string fppath = "./fpfile/"+fpfile;
     
-    // Switch(evaluate_flag) calculer le score sur data
+    ifstream f(fppath.c_str());
+    vector<Solution> VS;
     
+    if(!f)  throw string("Erreur lors de l'ouverture du fichier " + fppath);
+    else{
+      
+	string line;
+	vector<string> tokens;
+      
+	
+	
+	while( getline(f,line) ){
+	    
+	    if(!line.empty() ){
+	     
+		tokens.clear(); tokens.shrink_to_fit();
+		tokens = explode4(line);
+		
+		Solution s;
+		s.nbBits = _data.getnbCols() -1;
+		
+		s.bits = new char[s.nbBits];
+		for(unsigned i=0; i < s.nbBits; ++i) s.bits[i] = '0';
+		
+		for(unsigned i=0; i < tokens.size()-1; ++i){
+		    s.bits[atoi(tokens[i].c_str())] = '1';
+		}
+		
+		vector<int> cm = _data.confusionMatrix(s.bits);
+		
+		for(unsigned k=0; k < cm.size(); ++k) s.CM[k] = cm[k];
+		
+		switch(evaluate_flag){
+		    case 0:
+			s.score = f1_measure((float)s.CM[0], (float)s.CM[1], (float)s.CM[3]);
+			break;
+		    case 1:
+			s.score = perso_measure(tokens.size()-1,(float)s.CM[0], (float)s.CM[3], 10, 2 );
+			break;
+		    case 2:
+			s.score = phi_coeff((float)s.CM[0],(float)s.CM[1],(float)s.CM[2],(float)s.CM[3]);
+			break;
+		    case 3:
+			s.score = j_stat((float)s.CM[0],(float)s.CM[1],(float)s.CM[2],(float)s.CM[3]);
+			break;
+		}
+		
+		
+		VS.push_back(s);
+		
+	    }
+	}
+	f.close();
+    }
+   
+   
+    // Tri des résultats
+    sort(VS.begin(), VS.end(), compareGain);
+    
+
     // Export des résultats vers fichier
-    string resultName = "results/"+file+"_HC_";
+    string resultName = "results/"+fpfile+"_BB_";
     // Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
     switch(evaluate_flag){
 	case 0:
-	    resultName.append("f1_");
+	    resultName.append("f1");
 	    break;
 	case 1:
-	    resultName.append("perso_");
+	    resultName.append("perso");
 	    break;
 	case 2:
-	    resultName.append("phi_");
+	    resultName.append("phi");
 	    break;
 	case 3:
-	    resultName.append("j_");
+	    resultName.append("jstat");
 	    break;      
     }
-    
-    time_t stamp = time(NULL);
-    int al1 = rand() % 1111 + 1000;
-    int al2 = rand() % 3333 + 200;
-    int al3 = al1*al2;
-    stamp -= al3;
-    
-    resultName.append(to_string(stamp));
-    
+
     
     ofstream outFile(resultName, ofstream::binary);
     
@@ -206,6 +272,16 @@ int main(int argc, char** argv){
 	}
 	outFile << endl;
 
+	for( long long unsigned j=0; j < VS.size(); ++j){
+	  
+	      for(unsigned i=0; i < VS[j].nbBits; ++i){
+		      if( VS[j].bits[i] == '1' )
+			outFile << i << " ";
+		}
+		outFile << endl << "Score : " << VS[j].score << " | TP " << VS[j].CM[0] << " | FP " << VS[j].CM[1] << " | TN " << VS[j].CM[2] << " | FN " << VS[j].CM[3] << endl;
+	  
+	      delete[] VS[j].bits;
+	}
 	outFile.close();
     }
     
