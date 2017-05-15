@@ -77,6 +77,15 @@ float j_stat(float tp, float fp, float tn, float fn){
 }
 
 /**
+ * Fonction de gain utilisée dans l'algorithme FOIL
+ * G = TP* (log( TP/(TP+FP) ) - log( (TP+FN)/(TP+FP+TN+FN) ) )
+ */
+float foil(float tp, float fp, float tn, float fn){
+ 
+    return tp*(log(tp/(tp+fp))-log((tp+fn)/(tp+fp+tn+fn)));
+}
+
+/**
  * Comparaison de deux voisins selon leur score ( vector<float> s[0])
  */
 static bool compareGain(const Solution a, const Solution b){
@@ -138,6 +147,7 @@ int main(int argc, char** argv){
 	    {"perso_measure", no_argument, &evaluate_flag, 1},
 	    {"phi_coeff", no_argument, &evaluate_flag, 2},
 	    {"j_stat", no_argument, &evaluate_flag, 3},
+	    {"foil", no_argument, &evaluate_flag, 4},
 	    
 	    {"reverseC", no_argument, &reverseClass_flag, 1},
 	    
@@ -227,6 +237,8 @@ int main(int argc, char** argv){
 		    case 3:
 			s.score = j_stat((float)s.CM[0],(float)s.CM[1],(float)s.CM[2],(float)s.CM[3]);
 			break;
+		    case 4:
+			s.score = foil((float)s.CM[0],(float)s.CM[1],(float)s.CM[2],(float)s.CM[3]);
 		}
 		
 		
@@ -257,7 +269,10 @@ int main(int argc, char** argv){
 	    break;
 	case 3:
 	    resultName.append("jstat");
-	    break;      
+	    break;  
+	case 4:
+	    resultName.append("foil");
+	    break;
     }
 
     

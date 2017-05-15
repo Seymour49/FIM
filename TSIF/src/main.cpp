@@ -74,14 +74,23 @@ float j_stat(float tp, float fp, float tn, float fn){
     return ( (tp/(tp+fn)) + (tn/(tn+fp)) - 1);
 }
 
+
+/**
+ * Fonction de gain utilisée dans l'algorithme FOIL
+ * G = TP* (log( TP/(TP+FP) ) - log( (TP+FN)/(TP+FP+TN+FN) ) )
+ */
+float foil(float tp, float fp, float tn, float fn){
+ 
+    return tp*(log(tp/(tp+fp))-log((tp+fn)/(tp+fp+tn+fn)));
+}
+
+
 /**
  * Comparaison de deux voisins selon leur score ( vector<float> s[0])
  */
 static bool compareGain(const pair<int,vector<float>> a, const pair<int,vector<float>> b){
 	return a.second[0] > b.second[0];
 }
-
-
 
 
 /**
@@ -131,6 +140,9 @@ pair<unsigned, vector<float>> naiveNeighboor(Solution s, Dataset& data, vector<i
 		case 3:
 		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
 		    break;
+		case 4:
+		    score[0] = foil(score[1],score[2],score[3],score[4]);
+		    break;
 	    }	    
 	    scores.push_back(make_pair(i,score));
 	    tmp.bits[i] = '0';
@@ -162,6 +174,9 @@ pair<unsigned, vector<float>> naiveNeighboor(Solution s, Dataset& data, vector<i
 		    break;
 		case 3:
 		    score[0] = j_stat(score[1],score[2],score[3],score[4]);
+		    break;
+		case 4:
+		    score[0] = foil(score[1],score[2],score[3],score[4]);
 		    break;
 		}
 		
@@ -280,6 +295,9 @@ void randomInit(Solution *s, Dataset & data, int eval_flag, unsigned minS, unsig
 	case 3:
 	    score = j_stat((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
 	    break;
+	case 4:
+	    score = foil((float)CMS[0],(float)CMS[1],(float)CMS[2],(float)CMS[3]);
+	    break;
     }
     
     s->score = score;
@@ -388,6 +406,7 @@ int main(int argc, char** argv){
 	    {"perso_measure", no_argument, &evaluate_flag, 1},
 	    {"phi_coeff", no_argument, &evaluate_flag, 2},
 	    {"j_stat", no_argument, &evaluate_flag, 3},
+	    {"foil", no_argument, &evaluate_flag, 4},
 	    
 	    {"reverseC", no_argument, &reverseClass_flag, 1},
 	    
@@ -492,6 +511,9 @@ int main(int argc, char** argv){
 	case 3:
 	    resultName.append("j_");
 	    break;      
+	case 4:
+	    resultName.append("foil");
+	    break;
     }
     
     time_t stamp = time(NULL);
