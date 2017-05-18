@@ -101,15 +101,15 @@ Le calcul des motifs fréquents est une notion essentielle dans de nombreux doma
 
 \hspace{0.15cm}L'avènement de l'ère du Big Data a fait rentrer le problème de calcul des motifs fréquents dans une nouvelle dimension. En effet, le volume de données produites dans tous les domaines a cru de manière vertigineuse ces dernières années, rendant l'extraction de connaissances d'autant plus nécessaire et délicate. De fait, la problématique du passage à l'échelle des méthodes exactes est devenue primordiale. Bien que divers efforts en ce sens aient été faits au travers de nombreuses publications, ils se concentrent généralement sur l'optimisation et la parallélisation des méthodes existantes. \\
 
-\hspace{0.15cm}Les métaheuristiques sont des méthodes algorithmiques d'optimisation visant à résoudre des problèmes difficiles pour lesquels les méthodes exactes sont soit inexistantes soit impossible à mettre en place en pratique. Généralement, une métaheuristique tend à faire évoluer une ou plusieurs solutions vers un optimum global en effectuant itérativement des mouvements de voisinage (légère modification) sur la solution courante. De nombreuses métaheuristiques ont été proposées et largement appliquées à de nombreux problèmes, allant de la simple recherche locale aux algorithmes mémétiques \\
+\hspace{0.15cm}Les métaheuristiques sont des méthodes algorithmiques d'optimisation visant à résoudre des problèmes difficiles pour lesquels les méthodes exactes sont soit inexistantes soit impossibles à mettre en place en pratique. Généralement, une métaheuristique tend à faire évoluer une ou plusieurs solutions vers un optimum global en effectuant itérativement des mouvements de voisinage (légère modification) sur la solution courante. De nombreuses métaheuristiques ont été proposées et largement appliquées à de nombreux problèmes, allant de la simple recherche locale aux algorithmes mémétiques offrant une combinaison entre algorithme génétique et recherche locale. \\
 
-\hspace{0.15cm}Ainsi, nous formaliserons le problème de calcul de motifs fréquents sous contraintes dans la section suivante avant d'effectuer un état de l'art des méthodes existantes en section 3. Le chapitre 4 sera dédié à la présentation de notre méthode dont nous discuterons des résultats en section 5. Le dernier chapitre sera consacré à la conclusion de cette étude et à une ouverture vers de futurs travaux.
+\hspace{0.15cm}Ainsi, nous formaliserons le problème de calcul de motifs fréquents sous contraintes dans le chapitre suivant avant d'effectuer un état de l'art des méthodes existantes. Le chapitre 4 sera dédié à la présentation de nos contributions dont nous discuterons des résultats en section 5. Le dernier chapitre sera consacré à la conclusion de cette étude et à une ouverture vers de futurs travaux.
 
 \newpage
 \chapter{Le problème du calcul des motifs fréquents}
 
 \section{Définition du problème}
-	La définition la plus courante du problème de calcul des motifs fréquents se fait par la théorie des ensembles. Nous verrons cependant dans le chapitre suivant qu'il peut également être décrit par la théorie des graphes. Nous présenterons dans un premier temps un cadre formel nécessaire à la définition du problème que nous illustrerons ensuite. Enfin, nous introduirons quelques propriétés dérivés de la définition du problème.
+	Ce problème a été largement étudié au travers de différentes théories. La première et principale est la théorie des ensembles et treillis sur laquelle la présentation du problème sera faite. Nous pouvons également noter que ce problème a été abordé par la théorie des graphes. En effet, le problème d'extraction de motifs fréquents peut se voir comme le calcul d'une clique maximale au sein d'un graphe bipartite. Dans un premier temps, noud poserons un cadre formel nécessaire à la définition du problème que nous illustrerons ensuite. Dans un second temps, nous introduirons quelques propriétés dérivées de la définition du problème et utilisées par de nombreuses méthodes exactes.
 
 \subsection{Formalisation}
 	Soit $\mathcal{I}$ un ensemble de \emph{symboles} appelées \textbf{items}. Quelque soit \emph{I} $ \subseteq \mathcal{I}$, \emph{I} est un \emph{motif} appelé \textbf{itemset}. \\
@@ -137,7 +137,7 @@ $\textbf{Freq}_{\mathcal{T}}$(\emph{I}) = $\frac{ | \textbf{ cover$_{\mathcal{T}
 avec \emph{minfreq} simplement définie par $\frac{\emph{minsup}}{| \mathcal{T} |}$. \\
 
 \subsection{Exemple}
-	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante (que nous conserverons tout au long de cet article). Le tableau 1 décrit chaque transaction par : un identifiant, une liste d'objets achetés et la liste des items fréquents vis à vis d'un support minimal de  3.\\
+	Situons nous dans le contexte de la définition historique de problème et considérons la base de transactions suivante. Le tableau 1 décrit chaque transaction par : un identifiant, une liste d'objets achetés et la liste des items fréquents vis à vis d'un support minimal de  3.\\
 
 \begin{tabular}{|c|l|l|}
 	\hline
@@ -167,42 +167,52 @@ La complexité du problème vient d'une part du nombre d'itemsets à considérer
 \emph{X} $\subseteq $ \emph{Y} $\Rightarrow$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \leq $ \textbf{sup$_{\mathcal{T}}$}(\emph{X})
 \end{center}
 
-Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un itemset comprenant k objets) est fréquent, alors l'ensemble \emph{Y} des k-1-itemsets $\subset $\emph{X} est fréquent. Par exemple, (fca:3) est fréquent, de même que (fc:3), (fa:3) et (ca:3). Nous pouvons de manière duale dire que si un k- itemset \emph{X} est non-fréquent, alors aucun des k+1-itemset \emph{Y} tel que \emph{X} $ \subset $ \emph{Y} n'est fréquent. Ces deux observations sont à la base des différents sens de parcours de l'espace de recherche des $2^{n}$ itemsets possibles dans la plupart des algorithmes.
+Cette propriété nous permet de dire que si un k-itemset \emph{X} (i.e. un itemset comprenant k objets) est fréquent, alors l'ensemble \emph{Y} des k-1-itemsets $\subset $\emph{X} est fréquent. Par exemple, (fca:3) est fréquent, de même que (fc:3), (fa:3) et (ca:3). \\
+Nous pouvons de manière duale dire que si un k- itemset \emph{X} est non-fréquent, alors aucun des k+1-itemset \emph{Y} tel que \emph{X} $ \subset $ \emph{Y} n'est fréquent. Ces deux observations sont à la base des différents sens de parcours de l'espace de recherche des $2^{n}$ itemsets possibles dans la plupart des algorithmes.
 
-\section{Problème des itemsets clos maximaux}
+\section{Itemsets clos \& maximaux}
 
-	Afin de réduire l'espace de recherche, il a été proposé de contraindre la recherche à l'ensemble des itemsets clos. Un k-itemset\emph{X} fréquent est clos si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \forall  $ \emph{Y} tel que \emph{X} $ \subset $ \emph{Y}.  Un itemset clos est maximal si aucun de ses surensembles n'est fréquent. Ainsi dans notre exemple, l'ensemble des itemsets clos est   $\textbf{C}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (b:3), (cp:3), (fcam:3) \} et l'ensemble des itemsets clos maximaux est  $\textbf{MC}_{\mathcal{T},3}$ =  $\textbf{C}_{\mathcal{T},3} - $ \{ (f:4), (c:4) \}. La figure suivante représente le treillis complet des différents itemsets possibles sur les objets fréquents. Y figurent d'une part les itemsets fréquents en vert, d'autre part les itemsets clos en jaune et enfin les itemsets clos maximaux en rouge. Pour plus de lisibilité, les itemsets non-fréquents ne figurent pas dans le treillis.\\
+\hspace{1.5cm}Afin de réduire l'espace de recherche, il a été proposé de contraindre la recherche à l'ensemble des itemsets clos. Un k-itemset \emph{X} fréquent est clos si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $ \forall  $ \emph{Y} tel que \emph{X} $ \subset $ \emph{Y}.  Littéralement, un itemset est clos si son support décroit lorsqu'il est étendu. \\
+
+\hspace{1.5cm}Un itemset clos est maximal si aucun de ses surensembles n'est fréquent. Formellement, un k-itemset \emph{X} est maximal si \textbf{sup$_{\mathcal{T}}$}(\emph{X}) $>$ \textbf{sup$_{\mathcal{T}}$}(\emph{Y}) $\forall \emph{Y}  | \emph{X} \subset \emph{Y}$. \\
+
+\hspace{1.5cm}Ainsi dans notre exemple, l'ensemble des itemsets clos est   $\textbf{C}_{\mathcal{T},3}$ = \{ (f:4), (c:4), (b:3), (cp:3), (fcam:3) \} et l'ensemble des itemsets clos maximaux est  $\textbf{MC}_{\mathcal{T},3}$ =  $\textbf{C}_{\mathcal{T},3} - $ \{ (f:4), (c:4) \}. La figure suivante représente le treillis complet des différents itemsets possibles sur les objets fréquents. Y figurent d'une part les itemsets fréquents en vert, d'autre part les itemsets clos en jaune et enfin les itemsets maximaux en rouge. Pour plus de lisibilité, les itemsets non-fréquents ne figurent pas dans le treillis.\\
 
 \begin{figure}
 	\begin{adjustwidth}{-2.7cm}{}
 	\begin{tabular}{l}
 	\includegraphics[width=12cm,height=10cm]{./img/treillis_is.jpg}\\
 	\end{tabular}
-	\caption{\label{fig:text}Treillis des itemsets fréquents, clos et maximaux de notre exemple}
+	\caption{\label{fig:text}Treillis des itemsets \textcolor{green}{fréquents}, \textcolor{yellow}{clos} et \textcolor{red}{maximaux} de notre exemple}
 	\end{adjustwidth}
 \end{figure}
 
-Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivée de l'ensemble des itemsets clos maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux. 
+Zaki et al. et Pas. et al. prouvent dans \cite{ZAK99} et \cite{PAS99} que l'intégralité des itemsets fréquents peut être dérivée de l'ensemble des itemsets clos et/ou maximaux. Ils proposent alors d'adapter les méthodes existantes pour le calcul des itemsets clos maximaux.  
 
 \newpage
 
 \section{Itemset et classification}
 
-	Dans cette section nous redéfinissons le problème à considérer. Nous l'étudierons ensuite sous l'aspect d'un problème combinatoire solvable par recherche locale. Enfin nous l'aborderons via une approche évolutionnaire. \\
+	Dans cette section nous redéfinissons le problème à considérer permettant l'usage raisonnable de méthodes heuristiques pour le résoudre. Nous l'aborderons dans un premier temps sous l'aspect d'un problème combinatoire solvable par recherche locale. Ensuite, nous proposerons une recherche itérée avec ses avantages avant d'envisager une approche évolutionnaire. \\
 
 \subsection{Définition du problème}
-	Soit $\mathcal{T}$ une base de transactions définie sur $\mathcal{N}$ items. En plus d'un identifiant et de ses items, chaque transaction possède une classe (positive ou négative). Le problème consiste à trouver parmi $\mathcal{T}$ un itemset X tel que le support de X dans la classe positive soit supérieur à un seuil minimal \emph{minsup} \textbf{et} que le support de X dans la classe négative soit inférieur à un seuil maximal \emph{maxsup}. \\
+	Sortant d'un contexte d'extraction de motifs fréquents pour l'établissement de règles d'associations, nous nous plaçons maintenant dans un contexte de classification binaire d'un ensemble de transactions. Notre objectif reste cependant d'avoir une approche généraliste, i.e. sans disposer d'informations du contexte d'application des méthodes proposées. \\ 
+	Soit $\mathcal{T}$ une base de transactions définie sur $\mathcal{N}$ items. En plus d'un identifiant et de ses items, chaque transaction possède une classe (positive ou négative). A partir de là, le but du problème est de trouver un itemset X offrant la meilleure classification possible. Cependant, la difficulté résulte maintenant dans la mesure à adopter pour évaluer la qualité d'une solution. Pour appréhender cette difficulté, le tableau suivant récapitule les 4 ensembles de bases à déterminer pour une solution vis à vis de $\mathcal{T}$. \\
 
-	Formellement, soit X = \{$i_{1}, ..., i_{k}$\} un k-itemset quelconque. Alors, soient \textbf{$sup_{+}$}(X) et \textbf{$sup_{-}$}(X) les deux fonctions suivantes : 
 \begin{center}
-\textbf{$sup_{+}$}(X) = \{$t_{j}$ | $t_{j} \in \mathcal{T}$ et $\forall i \in X,  t_{i,j}$ = 1 et $t_{j} \in C^{+}$\}\\ 
-\textbf{$sup_{-}$}(X) = \{$t_{j}$ | $t_{j} \in \mathcal{T}$ et $\forall i \in X,  t_{i,j}$ = 1 et $t_{j} \in C^{-}$\}\\ 
+	\begin{tabular}{|c|c|c|}
+		\hline
+		& $\emph{S} \subseteq \emph{t}$ & $\emph{S} \not\subseteq \emph{t}$ \\
+		\hline
+		Classe \emph{t} = 1 & $\emph{t} \in TP$ & $\emph{t} \in FP$ \\
+		\hline
+		Classe \emph{t} = 0 & $\emph{t} \in FN$ & $\emph{t} \in TN$ \\
+		\hline
+	\end{tabular}
 \end{center}
-X est un itemset solution si et seulement si les propriétés suivantes sont vérifiées : 
-\begin{center}
-|\textbf{$sup_{+}$}(X)| > \emph{minsup}\\
-|\textbf{$sup_{-}$}(X)| < \emph{maxsup}\\
-\end{center}
+
+
+
 
 
 \subsection{Représentation et évaluation d'une solution}
@@ -219,17 +229,6 @@ X est un itemset solution si et seulement si les propriétés suivantes sont vé
 
  Le tableau suivant récapitule l'appartenance d'une transaction \emph{t} à un des quatre ensembles : 
 	 
-\begin{center}
-	\begin{tabular}{|c|c|c|}
-		\hline
-		& $\emph{S} \subseteq \emph{t}$ & $\emph{S} \not\subseteq \emph{t}$ \\
-		\hline
-		Classe \emph{t} = 1 & $\emph{t} \in TP$ & $\emph{t} \in FP$ \\
-		\hline
-		Classe \emph{t} = 0 & $\emph{t} \in FN$ & $\emph{t} \in TN$ \\
-		\hline
-	\end{tabular}
-\end{center}
 
 La précision d'une telle classification correspond au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses données (TP+FP). Le rappel correspond quant à lui au rapport entre le nombre de réponses pertinentes données (TP) et le nombre de réponses pertinantes existant (TP+FN). 
 
@@ -278,57 +277,7 @@ Le calcul de cette évaluation nécessite un scan complet du jeux de données af
 
 Ce voisinage est de taille fixe égale à la taille de $\mathcal{I}$. En effet, chaque item a soit la possibilité d'être ajouté ou bien d'être enlevé de la solution courante. Nous pourrons éventuellement contraindre plus spécifiquement ce voisinage en tentant de spécifier les items pouvant être ajoutés/supprimés en fonction d'informations extraites lors de l'évaluation de la solution courante.
 
-\subsection{Recherche tabou itérée}
-
-\hspace{1cm}Le premier algorithme que nous proposons est une recherche tabou itérée. Il débute par une première recherche tabou sur une solution initiale \emph{S} aléatoirement construite. Ensuite, nous effectuons itérativement une recherche tabou sur une solution annexe \emph{S'} issue de la perturbation de la solution courante. Si la recherche tabou sur \emph{S'} permet d'obtenir une solution de meilleure qualité, \emph{S'} remplace alors \emph{S} et le processus continue jusqu'à la fin du temps allouée ou à une stagnation de la recherche. \\
-
-\begin{algorithm}[H]
-\caption{Iterated Tabu Search}
-\SetKwInOut{Input}{Input}
-
-\SetKwInOut{Output}{Output}
-\Input{ TDB $\mathcal{T}$, tabu tenure \emph{tt}, total time \emph{TT}, profondeur $\beta$, nombre maximal de TS \emph{MaxTS} }
-
-\Output{ Pool de Solution 
-
-
-\end{algorithm}
-
-
-
-\hspace{1cm}A chaque itération, la solution courante est remplacée par la meilleure solution voisine, i.e. celle qui maximise la fonction d'évaluation. Il est par conséquent possible qu'aucun voisin n'améliore celle-ci, permettant par conséquent de sortir d'un optimum local. La mécanique tabou consiste ici à interdire à un item ayant été ajouté ou supprimé récemment de subir l'opération inverse pendant un nombre fixé d'itérations appelé \emph{tabu tenure}. Un critère d'aspiration est toutefois indispensable dans le cas où un item interdit améliore la meilleure solution globale. L'algorithme est présenté ci-après.
-	
-\begin{algorithm}[H]
-\caption{Tabu Search}
-\SetKwInOut{Input}{Input}
-
-\SetKwInOut{Output}{Output}
-\Input{ TDB $\mathcal{T}$, tabu tenure \emph{tt}, total time \emph{TT}, nombre max sans amélioration $\beta$ }
-\Output{ Solution \emph{$S_{b}$} }
-\Begin{
-	
-	Solution \emph{S} = randomInit(); \\
-	Solution \emph{$S_{b}$} = \emph{S}; \\
-	d = 0; iteration = 0; \\
-	\Repeat{ d == $\beta$ || timeLeft == 0}{
-		Solution \emph{S'} = BestNeighboor(\emph{S}); \\
-		MaJTabuList(\emph{S'}, \emph{S}, $\emph{tt}+iteration$); \\
-		\emph{S} $\longleftarrow$ \emph{S'}; \\
-		
-		\If{ Evaluation(\emph{S'}) $>$ Evaluation($\emph{S}_{b}$) }{
-		
-			\emph{$S_{b}$} = \emph{S}; \\
-			d = 0;
-		}
-		\Else{
-			d = d  + 1; 
-		}
-		iteration = iteration + 1; \\
-	}
-}
-
-\end{algorithm}
-
+\
 \begin{center}
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline

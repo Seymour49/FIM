@@ -5,9 +5,8 @@
 \contentsline {subsection}{\numberline {2.1.1}Formalisation}{6}{subsection.2.1.1}
 \contentsline {subsection}{\numberline {2.1.2}Exemple}{7}{subsection.2.1.2}
 \contentsline {subsection}{\numberline {2.1.3}Complexit\IeC {\'e} et Propri\IeC {\'e}t\IeC {\'e}s}{7}{subsection.2.1.3}
-\contentsline {section}{\numberline {2.2}Probl\IeC {\`e}me des itemsets clos maximaux}{8}{section.2.2}
+\contentsline {section}{\numberline {2.2}Itemsets clos \& maximaux}{8}{section.2.2}
 \contentsline {section}{\numberline {2.3}Itemset et classification}{10}{section.2.3}
 \contentsline {subsection}{\numberline {2.3.1}D\IeC {\'e}finition du probl\IeC {\`e}me}{10}{subsection.2.3.1}
 \contentsline {subsection}{\numberline {2.3.2}Repr\IeC {\'e}sentation et \IeC {\'e}valuation d'une solution}{10}{subsection.2.3.2}
 \contentsline {subsection}{\numberline {2.3.3}Relation de voisinage}{11}{subsection.2.3.3}
-\contentsline {subsection}{\numberline {2.3.4}Recherche tabou it\IeC {\'e}r\IeC {\'e}e}{12}{subsection.2.3.4}
