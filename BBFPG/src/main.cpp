@@ -160,7 +160,7 @@ int main(int argc, char** argv){
 	// getopt_long recupere l'option ici
 	int option_index = 0;
 	
-	opt = getopt_long(argc,argv, "d:", long_options, &option_index);
+	opt = getopt_long(argc,argv, "d:f:", long_options, &option_index);
 	
 	// fin des options
 	if(opt == -1)
@@ -177,6 +177,7 @@ int main(int argc, char** argv){
 		  break;
 	    case 'f':
 		  fpfile = string(optarg);
+		  break;
 	}
 	
     }
@@ -187,10 +188,10 @@ int main(int argc, char** argv){
     Dataset _data;
     _data.setReverseFlag(reverseClass_flag);
     
-    _data.loadFileBinary("./dataset/"+file);
+    _data.loadFileBinary("./BBFPG/data/"+file);
    
     // Charger  le fichier d'itemset obtenus par fpgrowth
-    string fppath = "./fpfile/"+fpfile;
+    string fppath = "./BBFPG/fpfile/"+fpfile;
     
     ifstream f(fppath.c_str());
     vector<Solution> VS;
@@ -255,7 +256,7 @@ int main(int argc, char** argv){
     
 
     // Export des résultats vers fichier
-    string resultName = "results/"+fpfile+"_BB_";
+    string resultName = "./BBFPG/results/"+fpfile+"_BB_";
     // Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
     switch(evaluate_flag){
 	case 0:

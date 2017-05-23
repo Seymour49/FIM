@@ -265,7 +265,7 @@ void randomInit(Solution *s, Dataset & data, int eval_flag, unsigned minS, unsig
 	}
     }
     
-    int nbItem = rand() % (bits.size()/4) + (bits.size()/5);
+    int nbItem = bits.size() - 10;
     
     // Mélange des positions 
     random_shuffle(bits.begin(), bits.end());
@@ -317,6 +317,8 @@ void properCopy(Solution &s1, Solution* s2){
     for(unsigned i=0; i < 4; ++i) s2->CM[i] = s1.CM[i];
 }
 
+// Vecteur de solutions pour export des résultats
+vector<Solution> results;
 
 Solution tabuSearch(Solution & s0, Dataset &_data, long long int maxIt,long long int maxNoUp, int tabuTenure, int eval_flag, unsigned minS, unsigned maxS){
  
@@ -359,6 +361,9 @@ Solution tabuSearch(Solution & s0, Dataset &_data, long long int maxIt,long long
 	    
 	    for(unsigned k=0; k < 4; ++k) _SB.CM[k] = _sCurrent.CM[k];
 	    
+	    Solution bs;
+	    properCopy(_SB, &bs);
+	    results.push_back(bs);
 	    d = 0;
 	}
 	else{
@@ -383,14 +388,14 @@ int main(int argc, char** argv){
      * Gestion des arguments
      */
     string file = "SD_I20_T50_D0.72"; 		// JDD par défaut
-    long long int maxIt = 10000;
-    long long int maxNoUp = 2500;			// Max mouvement voisinage sans amélioration avant arrêt
-    int tabuTenure = 15;			// TabuTenure
+    long long int maxIt = 2500;
+    long long int maxNoUp = 250;			// Max mouvement voisinage sans amélioration avant arrêt
+    int tabuTenure = 25;			// TabuTenure
     
-    unsigned minS = 5000;			// Valeur du seuil minimal
-    unsigned maxS = 250;			// Valeur du seuil maximal
+    unsigned int minS = 5000;			// Valeur du seuil minimal
+    unsigned int maxS = 250;			// Valeur du seuil maximal
     
-    unsigned repeat = 5;
+    unsigned repeat = 1;
     // Flag pour fonction évaluation
     int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
     int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
@@ -425,7 +430,7 @@ int main(int argc, char** argv){
 	// getopt_long recupere l'option ici
 	int option_index = 0;
 	
-	opt = getopt_long(argc,argv, "t:d:b:n:s:l:u:", long_options, &option_index);
+	opt = getopt_long(argc,argv, "r:d:b:n:s:l:u:", long_options, &option_index);
 	
 	// fin des options
 	if(opt == -1)
@@ -470,12 +475,8 @@ int main(int argc, char** argv){
     _data.setReverseFlag(reverseClass_flag);
     
 //     _data.loadFileInteger("./data/mushroom.dat");
-    _data.loadFileBinary("./data/"+file);
-   
-    tabuTenure = (_data.getnbCols()-1) / 3;
-    // Vecteur de solutions pour export des résultats
-    vector<Solution> results;
-   
+    _data.loadFileBinary("./TSIF/data/"+file);
+    
     for(unsigned r=0; r < repeat; ++r){
 	  
 	// Début Tabu Search 
@@ -496,7 +497,7 @@ int main(int argc, char** argv){
 
 
     // Export des résultats vers fichier
-    string resultName = "results/"+file+"_TS_";
+    string resultName = "./TSIF/results/"+file+"_TS_";
     // Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
     switch(evaluate_flag){
 	case 0:
@@ -548,8 +549,9 @@ int main(int argc, char** argv){
 		      outFile << k << " ";
 	     }
 	     outFile << endl;
-	     outFile << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1] << endl;
-	     outFile << "TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
+	     outFile << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1];
+	     outFile << " | TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
+	     outFile << "###############################################################" << endl;
 	     delete[] results[j].bits;
 	}
 	

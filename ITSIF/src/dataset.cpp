@@ -407,7 +407,7 @@ void Dataset::clearDataset(char* bitset)
     
     delete[] _Matrice;
     
-    cout << "Retrait de " << _nbRows - tid.size() << " transactions" << endl;
+//     cout << "Retrait de " << _nbRows - tid.size() << " transactions" << endl;
     
     _nbRows = tid.size();
     

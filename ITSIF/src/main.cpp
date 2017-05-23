@@ -280,7 +280,7 @@ void randomInit(Solution *s, Dataset & data, int eval_flag, unsigned minS, unsig
 	}
     }
     
-    int nbItem = rand() % (bits.size()/4) + (bits.size()/5);
+    int nbItem = bits.size() - 10;
     
     // Mélange des positions 
     random_shuffle(bits.begin(), bits.end());
@@ -340,6 +340,8 @@ void perturbate(Solution* S){
     displaySolution(*S);
 }
 
+// Vecteur de solutions pour export des résultats
+vector<Solution> results;
 
 Solution tabuSearch(Solution & s0, Dataset &_data,long long int maxNoUp, long long int maxIt, int tabuTenure, int eval_flag, unsigned minS, unsigned maxS){
  
@@ -382,6 +384,9 @@ Solution tabuSearch(Solution & s0, Dataset &_data,long long int maxNoUp, long lo
 	    
 	    for(unsigned k=0; k < 4; ++k) _SB.CM[k] = _sCurrent.CM[k];
 	    
+	    Solution bs;
+	    properCopy(_SB, &bs);
+	    results.push_back(bs);
 	    d = 0;
 	}
 	else{
@@ -407,13 +412,14 @@ int main(int argc, char** argv){
      */
     string file = "SD_I20_T50_D0.72"; 		// JDD par défaut
     
-    long long int maxIt = 10000;
-    long long int maxNoUp = 2500;		// Max mouvement voisinage sans amélioration avant arrêt
-    int tabuTenure = 15;			// TabuTenure
+    long long int maxIt = 2500;
+    long long int maxNoUp = 250;		// Max mouvement voisinage sans amélioration avant arrêt
+    int tabuTenure = 25;			// TabuTenure
     
     unsigned minS = 5000;			// Valeur du seuil minimal
     unsigned maxS = 250;			// Valeur du seuil maximal
     
+    unsigned repeat = 1;
     // Flag pour fonction évaluation
     int evaluate_flag = 0;		// 0 = f1_measure, 1 = perso_measure
     int reverseClass_flag = 0;		// 0 = pas d'inversion, 1 = inversion
@@ -435,6 +441,7 @@ int main(int argc, char** argv){
 	    
 	    
 	    /* Options avec version courtes */
+	    {"repeat", required_argument, 0, 'r'},
 	    {"dataFile", required_argument, 0, 'd'},
 	    {"tabuTenure", required_argument, 0, 'b'},
 	    {"maxNoUp", required_argument, 0, 'n'},
@@ -447,7 +454,7 @@ int main(int argc, char** argv){
 	// getopt_long recupere l'option ici
 	int option_index = 0;
 	
-	opt = getopt_long(argc,argv, "d:b:n:s:l:u:", long_options, &option_index);
+	opt = getopt_long(argc,argv, "r:d:b:n:s:l:u:", long_options, &option_index);
 	
 	// fin des options
 	if(opt == -1)
@@ -460,6 +467,9 @@ int main(int argc, char** argv){
 		if(long_options[option_index].flag != 0)
 		  break;
 		
+	    case 'r':
+		  repeat = atoi(optarg);
+		  break;
 	    case 'd':
 		  file = string(optarg);
 		  break;
@@ -483,60 +493,42 @@ int main(int argc, char** argv){
     }
     
     /* Fin Gestion des Arguments */  
+    vector<string> comment;
+    bool commented = false;
     
-    // Chargement du fichier de données à traiter
-    Dataset _data;
-    _data.setReverseFlag(reverseClass_flag);
-    
-    _data.loadFileBinary("./data/"+file);
-   
-    // Vecteur de solutions pour export des résultats
-    vector<Solution> results;
-    
-    // Code de la recherche tabou itérée.
-   
-    do{
-	// Déclaration solution S2
-	Solution S;
-
-	randomInit(&S, _data,evaluate_flag, minS, maxS);
+    for( unsigned r=0; r < repeat; ++r){
+	Dataset _data;
+	// Chargement du fichier de données à traiter
+	_data.setReverseFlag(reverseClass_flag);
 	
-	// Recherche tabou sur S2
-	Solution rTS2 = tabuSearch(S, _data, maxNoUp, maxIt, tabuTenure, evaluate_flag, minS, maxS);
-	
-	// On retire de _data l'ensemble des tid couverts par rTS2    
-	_data.clearDataset(rTS2.bits);
-	
-	Solution OL; properCopy(rTS2,&OL);
-	results.push_back(OL);
-	
-	delete []rTS2.bits;
-	delete [] S.bits;
+	_data.loadFileBinary("./ITSIF/data/"+file);
+	if( !commented ){ comment = _data.getComment(); commented = true; }
+	// Code de la recherche tabou itérée.
       
-    }while( _data.getNBTCP() > 0 );
-    
- 
-    for(unsigned j=0; j < results.size(); ++j){
-	     for(long long unsigned k = 0; k < results[j].nbBits; ++k){
-		
-		    cout << results[j].bits[k] << " ";
-		
-	     }
-	     cout << endl << "Score : " << results[j].score << endl;
-	     
-	     for( long long unsigned k=0; k < results[j].nbBits; ++k){
-		  if( results[j].bits[k] == '1' )
-		      cout<< k << " ";
-	     }
-	     cout << endl;
-	     cout << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1] << endl;
-	     cout << "TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
-	     delete[] results[j].bits;
-	}
-/*
+	do{
+	    // Déclaration solution S2
+	    Solution S;
+
+	    randomInit(&S, _data,evaluate_flag, minS, maxS);
+	    
+	    // Recherche tabou sur S2
+	    Solution rTS2 = tabuSearch(S, _data, maxNoUp, maxIt, tabuTenure, evaluate_flag, minS, maxS);
+	    
+	    // On retire de _data l'ensemble des tid couverts par rTS2    
+	    _data.clearDataset(rTS2.bits);
+	    
+	    Solution OL; properCopy(rTS2,&OL);
+	    results.push_back(OL);
+	    
+	    delete []rTS2.bits;
+	    delete [] S.bits;
+	  
+	}while( _data.getNBTCP() > 0 );
+      
+    }
     // Export des résultats vers fichier
-    string resultName = "results/"+file+"_";
-    // Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
+    string resultName = "./ITSIF/results/"+file+"_";
+    //Ajout de la méthode d'évaluation utilisée dans le nom du fichier de sortie
     switch(evaluate_flag){
 	case 0:
 	    resultName.append("f1_");
@@ -569,7 +561,7 @@ int main(int argc, char** argv){
     if(!outFile) throw string("Erreur lors de l'ouverture du fichier de résultats");
     else{
       
-	vector<string> comment = _data.getComment();
+	
 	for(unsigned i=0; i < comment.size(); ++i){
 	    outFile << comment[i] << endl;
 	}
@@ -581,15 +573,15 @@ int main(int argc, char** argv){
 		
 	     }
 	     outFile << endl << "Score : " << results[j].score << endl;
-	     outFile << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1] << endl;
-	     outFile << "TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
+	     outFile << "TP : " << results[j].CM[0] << " | FP : " << results[j].CM[1];
+	     outFile << " | TN : " << results[j].CM[2] << " | FN : " << results[j].CM[3] << endl;
 	     delete[] results[j].bits;
 	}
 	
 	outFile.close();
     }
     
- */   
+   
 //     delete[] S.bits;
 
     return 0;
